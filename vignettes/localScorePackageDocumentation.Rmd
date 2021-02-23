@@ -1,0 +1,765 @@
+---
+title: "Local Score Package"
+author: "Sébastien Déjean - Sabine Mercier - Sebastian Simon - David Robelin"
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    df_print: paged
+    toc: yes
+vignette: >
+  %\VignetteIndexEntry{Local Score Package} 
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown} 
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  warning= FALSE,
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(localScore)
+```
+
+# Introduction
+
+This package provides functionalities for two main tasks:
+1- Calculating the local Score of a given score sequence or, of a given component sequence and a given scoring scheme.
+2- Calculating the statistical relevance ($p$-value) of a given local Score, associated to a given sequence length and a given distribution for the model.
+
+This first version of the package deals with a model of independent and identically distributed (I.I.D.) sequences. 
+
+# Local Score computation methods
+
+First defined in *Karlin and Altschul 1990*, it represents the value of the highest scoring segment in a sequence of scores. It corresponds to the highest cumulated sum of all subsequences (independent of length). 
+For the score to be relevant, the expectation of the sequence should be negative. Thus, for a sequence of interest, the possible score of sequence components can be  positive or negative.
+
+## A first example: function ``localScoreC()''
+
+Let us assume a score function taking its values in [-2, -1, 0, 1, 2]. A sample score sequence of length 100 could be
+
+```{r}
+library(localScore)
+help(localScore)
+ls(pos=2)
+sequence <- sample(-2:2, 100, replace = TRUE, prob = c(0.5, 0.3, 0.05, 0.1, 0.05))
+sequence
+localScoreC(sequence)
+
+```
+
+The result is a maximum score and for which subsequence it has been found: the starting position "[" and the end of it ("]").
+It also yields all other subsequences with a score equal or less and its position in the $suboptimalSegmentScores matrix. "Stopping Times" are local minima in the cumulated sum of the sequence and correspond to the beginning of excursions (potential segments of interest).
+
+Another example with missing score values.
+
+```{r}
+library(localScore)
+sequence <- sample(c(-3,2,0,1,5), 100, replace = TRUE, prob = c(0.5, 0.3, 0.05, 0.1, 0.05))
+head(sequence)
+localScoreC(sequence)
+
+```
+
+## Example with real scores: function ``localScoreC_double()''
+
+Real scores can also be considered with a dedicated function 'localScoreC_double'.
+
+```{r}
+score_reels=c(-1,-0.5,0,0.5,1)
+proba_score_reels=c(0.2,0.3,0.1,0.2,0.2)
+sample_from_model <- function(score.sple,proba.sple, length.sple){sample(score.sple,
+                    size=length.sple, prob=proba.sple, replace=TRUE)}
+seq.essai=sample_from_model(score.sple=score_reels,proba.sple=proba_score_reels, length.sple=10)
+localScoreC_double(seq.essai) 
+
+```
+## Example using a scoring function
+
+
+```{r}
+# Loading a fasta protein
+data(MidSeq)
+MidSeq
+# or using your own fasta sequence
+#MySeqAA_P49755 <- as.character(read.table(file="P49755.fasta",skip=1)[,1])
+#MySeqAA_P49755
+# Loading a scoring function
+data(dico)
+? dico
+# or using your own scoring function
+# dicoKyte<- loadScoreFromFile("Kyte1982.txt")
+# Transforming the amino acid sequence into a score sequence with the score function in dico file
+SeqScore_P49755 <- CharSequence2ScoreSequence(MidSeq,dico)
+head(SeqScore_P49755)
+length(SeqScore_P49755)
+# Computing the local score
+localScoreC(SeqScore_P49755)
+```
+
+> File dico is read using `read.csv()` with a default option `header=TRUE`. It is so necessary that the file has one. See Section "File format" for more details.
+
+
+# $p$-Value computation methods
+
+There are different methods available to establish the statistical significance, also called $p$-value, of the local score depending on the length and the score expectation. 
+This value describes the probability to encounter a given local score for a given score distribution and a given sequence length. Therefore it allows to determinate if the local score in question is significant or could have been obtained by chance.
+
+For an Identically and Independently Distributed Variables model (I.I.D.), the following methods for the calculus of the $p$-value are provided:
+
+## Simulating computation: functions "monteCarlo()" and "monteCarlo_double()"
+
+The function `monteCarlo()` simulates a number of score sequences similar (same distribution) to the one having yielded the local score in question. Therefore, it requires a function that produces such sequences and the parameters used by this function. See the help page and the following example to use the empirical distribution of a given sequence, but any other function, such as `rbinom()` or custom functions, are valid too.
+
+In the following example we search the probability to obtain a local score of 10 in the sequence we created in the previous section and which serves as a blueprint for the score sequences to produce. The return value is the $p$-value of the local score for the given score sequence. A plot of the distribution of all local scores simulated and the cumulative distribution function are displayed. These plots can be hidden by setting the argument "hist" to FALSE. The number of sequences simulated in our example is 1000, a default value, and can be changed by setting the argument "numSim" to an appropriate value.
+
+Note that the cumulative distribution function plot indicates $P( LocalScore\leq\cdot)$ and so the corresponding $p$-value equals 1 minus the cumulative distribution function value.
+
+```{r,  fig.width=7.2, fig.height=4}
+monteCarlo(local_score = 10, FUN = function(x) {
+  return(sample(x = x, size = length(x), replace = TRUE))}, x=sequence)
+```
+
+The use of this method depends of computing power, number of simulations, implementation of the simulating function and the length of the sequence. For long sequences, you may prefer the next method which combines simulating and approximated methods and called `KarlinMonteCarlo()` (see next section).
+
+There also exists a special function for real scores.
+
+```{r}
+
+# Example
+score_reels=c(-1,-0.5,0,0.5,1)
+proba_score_reels=c(0.2,0.3,0.1,0.2,0.2)
+sample_from_model <- function(score.sple,proba.sple, length.sple){sample(score.sple,
+                    size=length.sple, prob=proba.sple, replace=TRUE)}
+monteCarlo_double(5.5,FUN=sample_from_model, plot = TRUE, score.sple=score_reels,proba.sple=proba_score_reels, 
+                  length.sple=100, numSim = 1000)
+
+```
+
+## A mixed method: functions "karlinMonteCarlo()" and "karlinMonteCarlo_double()"
+
+The function `karlinMonteCarlo()` also uses a function supplied by the user to do simulations. However, it does not deduce directly the $p$-value from the cumulative distribution function. However, this function is used to estimate the parameters of the Gumbel distributon of *Karlin and al.* approximation. Thus, it is suited for long sequences. Note: `simulated_sequence_length` is the length of the simulated sequences. This value must correspond to the length of sequences yielded by FUN. The value of $n$ is the sequence length for which we want to compute the $p$-value. If $n$ too large function `MonteCarlo()` could be too much time consumming. Using`karlinMonteCarlo()` with a smaller sequence length `simulated_sequence_length` allows to extract the parameters and then to apply them to the sequence value $n$.
+
+```{r,  fig.width=7.2, fig.height=4}
+fu<-function(n, size, prob, shift){rbinom(size = size, n = n, prob = prob)+shift}
+karlinMonteCarlo(12, FUN = fu, n = 10000, size = 8, prob=0.2, shift = -2, 
+                 sequence_length = 1000000, simulated_sequence_length = 10000)
+```
+If not specified otherwise, the function produces three graphes, two of them like the function monte_carlo and the third a representation of $\ln(-\ln(cf))$, with $cf$ being the cumulated function, showing the linear regression in green color providing the parameters for the Gumbel distribution $K^*$ and $\lambda$.
+
+Example for real scores:
+
+```{r,  fig.width=7.2, fig.height=4}
+score_reels=c(-1,-0.5,0,0.5,1)
+proba_score_reels=c(0.2,0.3,0.1,0.2,0.2)
+fu <- function(score.sple, proba.sple, length.sple){sample(score.sple,
+                    size=length.sple, prob=proba.sple, replace=TRUE)}
+karlinMonteCarlo(85.5, FUN = fu, score.sple=score_reels,proba.sple=proba_score_reels, 
+                 length.sple=10000, numSim = 10000, sequence_length = 100000, 
+                 simulated_sequence_length = 10000)
+```
+
+## Exact method for integer scores: function ``daudin()''
+
+The exact method calculates the $p$-value exploiting the fact of the Lindley process associated to the score sequence is a Markov process. Therefore, an exact $p$-value can be retrieved. The complexity of matrix multiplication involved being $>O(n^2)$, the method is unsuited for sequences of either great length, $n\geq 10^4$ for example could take too much time for computation, or dispersed scores.  Note that the exact method requires integer scores.
+
+```{r}
+daudin(localScore = 15, sequence_length = 500, score_probabilities = 
+         c(0.2, 0.3, 0.3, 0.0, 0.1, 0.1), sequence_min = -3, sequence_max = 2)
+```
+
+This function is based on: *S. Mercier and J.J. Daudin 2001: "Exact distribution for the local score of one i.i.d. random sequence"*
+
+## How to use the exact method for real scores
+
+The exact method requires integer score to be used. For real scores, a homothetic transformation can be considered to be able to use the exact method. This transformation is theoretically validated to still provide an exact probability. The only existing drawback of the homothetic transformation is that the computation time is increasing.
+We can check in the following example that the $p$-value computation using the exact method with an homothetic transformation corresponds, approximately, to the real local score $p$-value computed with the Monte Carlo method.
+
+```{r}
+
+score_reels=c(-1,-0.5,0,0.5,1)
+proba_score_reels=c(0.2,0.3,0.1,0.2,0.2)
+sample_from_model <- function(score.sple,proba.sple, length.sple){sample(score.sple,
+                    size=length.sple, prob=proba.sple, replace=TRUE)}
+seq.essai=sample_from_model(score.sple=score_reels,proba.sple=proba_score_reels, length.sple=100)
+localScoreC_double(seq.essai) 
+C=10 # homothetic coefficient
+localScoreC(C*seq.essai) 
+
+```
+
+We can check that the local score of the sequence which has been homothetically transformed is multiplied by the same coefficient. We are going to compute the $p$-value. For this we need to create the integer score vector and its corresponding distribution from the ones dedicated to real scores:
+
+```{r}
+RealScores2IntegerScores(score_reels,proba_score_reels, coef=C)
+M.s.r=RealScores2IntegerScores(score_reels,proba_score_reels, coef=C)$ExtendedIntegerScore
+M.s.prob=RealScores2IntegerScores(score_reels,proba_score_reels, coef=C)$ProbExtendedIntegerScore
+M.SL=localScoreC(C*seq.essai)$localScore[1]
+M.SL
+pval.E=daudin(localScore = M.SL,sequence_length = 100, score_probabilities=M.s.prob,
+         sequence_min = -10, sequence_max = 10)
+pval.E
+```
+
+Let us compare the result of the exact method with homothetical transformation with MonteCarlo method for the initial sequence and real scores
+
+```{r}
+SL.real=localScoreC_double(seq.essai)$localScore[1]
+SL.real
+pval.MC=monteCarlo_double(local_score = SL.real, FUN = sample_from_model,
+      score.sple=score_reels,proba.sple=proba_score_reels, length.sple=100, plot=TRUE,numSim = 10000)
+pval.MC
+
+```
+
+We can check that the two  probabilities are very similar: `r pval.E` for the exact method and `r pval.MC` for Monte Carlo's one. The difference comes from the fact that the Monte Carlo method produces an approximation.
+
+## Approximate method of Karlin *et al.*: function ``karlin()''
+
+The method of Karlin uses the local score's distinctive cumulative distribution following a law of Gumbel to approximate the $p$-value. It is suited for large and very large sequences as the approximation is asymptotic with the sequence length and so more accurate for large sequences ; and secondly very large sequence case can be too much time and space consuming for the exact method whereas Karlin *et al.* method does not depend to the sequence length for the computationnal criteria. The average score must be non positive.
+
+```{r}
+score.v=-2:1
+score.p=c(0.3, 0.2, 0.2, 0.3)
+mean(score.v*score.p)
+karlin(localScore = 14, sequence_length = 100000, sequence_min = -2, sequence_max = 1,
+       score_probabilities = c(0.3, 0.2, 0.2, 0.3))
+karlin(localScore = 14, sequence_length = 1000, sequence_min = -2, sequence_max = 1,
+       score_probabilities = c(0.3, 0.2, 0.2, 0.3))
+```
+We verify here that the same local score value 14 is more usual for a longer sequence.
+
+```{r}
+# With missing score values
+karlin(localScore = 14, sequence_length = 1000, sequence_min = -3, sequence_max = 1,
+       score_probabilities = c(0.3, 0.2, 0.0, 0.2, 0.3))
+```
+
+This function is based on: Karlin *et al.* 1990: *"Methods for assessing the statistical significance of molecular sequence features by using general scoring schemes"*
+
+The function `Karlin()` is dedicated for integer scores. For real ones the homothetic solution presented for the exact method can also be applied.
+
+## An improved approximate method: function ``mcc()''
+
+The function `mcc()` uses an improved version of the Karlin's method to calculate the $p$-value. It is suited for sequences of length upper or equal to several hundreds.  Let us compare the three methods on the same case.
+
+```{r}
+mcc(localScore = 14, sequence_length = 1000, sequence_min = -3, sequence_max = 2,
+    score_probabilities = c(0.2, 0.3, 0.3, 0.0, 0.1, 0.1))
+
+daudin(localScore = 14, sequence_length = 1000, score_probabilities = 
+         c(0.2, 0.3, 0.3, 0.0, 0.1, 0.1), sequence_min = -3, sequence_max = 2)
+karlin(localScore = 14, sequence_length = 1000, sequence_min = -3, sequence_max = 2,
+       score_probabilities = c(0.2, 0.3, 0.3, 0.0, 0.1, 0.1))
+```
+We can observe than the improved approximation method with `mcc()` gives a $p$-value equal to `r mcc(localScore = 14, sequence_length = 1000, sequence_min = -3, sequence_max = 2,
+    score_probabilities = c(0.2, 0.3, 0.3, 0.0, 0.1, 0.1))` which is more accurate than the one of `karlin()` function equal to `r karlin(localScore = 14, sequence_length = 1000, sequence_min = -3, sequence_max = 2,
+       score_probabilities = c(0.2, 0.3, 0.3, 0.0, 0.1, 0.1))` compared to the exact method which computation equal to `r daudin(localScore = 14, sequence_length = 1000, score_probabilities = 
+         c(0.2, 0.3, 0.3, 0.0, 0.1, 0.1), sequence_min = -3, sequence_max = 2)`.
+       
+This function is based on the work of  S. Mercier, D. Cellier and D. Charlot 2003 *"An improved approximation for assessing the statistical significance of molecular sequence features''*.
+
+## An automatic method: function ``automatic_analysis()''
+This function is meant as a support for the unexperienced user. Since the use of methods for $p$-value requires some understanding on how these methods work, this function automatically selects an adequate methods based on the sequence given.
+
+There are different use-case scenarios for this function. One can just put a sequence and the model (Markov chains or identically and independantly distributed).
+```{r}
+automatic_analysis(sequences = list("x1" = c(1,-2,2,3,-2, 3, -3, -3, -2)), model = "iid")
+```
+In the upper example, the sequence is short, so the exact method is adapted. Here is another example. As the sequence is much more longer, the asymptotic approximation of Karlin *et al.* can be used. This is possible because the average score is negative. If not the MonteCarlo method could have been prefered by the function.
+
+```{r}
+
+score=c(-2,-1,0,1,2)
+proba_score=c(0.2,0.3,0.1,0.2,0.2)
+sum(score*proba_score)
+sample_from_model <- function(score.sple,proba.sple, length.sple){sample(score.sple,
+                    size=length.sple, prob=proba.sple, replace=TRUE)}
+seq.essai=sample_from_model(score.sple=score,proba.sple=proba_score, length.sple=5000)
+MyAnalysis=automatic_analysis(sequences = list("x1" = seq.essai),
+                              distribution=proba_score,score_extremes=c(-2,2), model = "iid")$x1
+MyAnalysis$'p-value'
+MyAnalysis$'method applied'
+MyAnalysis$localScore$localScore
+```
+
+For real score, achieved the homothetic transformation before. If not, the results could not be correct.
+
+
+```{r}
+
+score_reels=c(-1,-0.5,0,0.5,1)
+proba_score_reels=c(0.2,0.3,0.1,0.2,0.2)
+sample_from_model <- function(score.sple,proba.sple, length.sple){sample(score.sple,
+                    size=length.sple, prob=proba.sple, replace=TRUE)}
+seq.essai=sample_from_model(score.sple=score_reels,proba.sple=proba_score_reels, length.sple=1000)
+
+# Homothetie
+RealScores2IntegerScores(score_reels,proba_score_reels, coef=C)
+M.s.r=RealScores2IntegerScores(score_reels,proba_score_reels, coef=C)$ExtendedIntegerScore
+M.s.prob=RealScores2IntegerScores(score_reels,proba_score_reels, coef=C)$ProbExtendedIntegerScore
+# The analysis
+MyAnalysis=automatic_analysis(sequences = list("x1" = 10*seq.essai), model = "iid",
+                              distribution=M.s.prob,score_extremes=range(M.s.r))
+MyAnalysis$x1$'p-value'
+MyAnalysis$x1$'method applied'
+
+# Without the homothethie, the function gives a wrong result
+MyAnalysis2=automatic_analysis(sequences = list("x1" = seq.essai), model = "iid")
+MyAnalysis2$x1$'p-value'
+MyAnalysis2$x1$'method applied'
+
+
+```
+
+Whenever there is no distribution given, these is learnt from the sequence(s) given. The sequence(s) must be passed as **named list**.
+If there are more than one sequence, all sequences are treated. A progress bar informs the user about the progress made (helpful for computational intense sequences and/or great numbers of sequences).
+If the sequence(s) passed are not score sequences but sequence(s) of letters, a file picker dialog pops up. Here, the user can choose a file containing a mapping from letters to scores. The format is csv (view section "File Formats" for details) and allows also to provide a distribution that is loaded concurrently to the score. 
+One can also chose not to provide sequences at all. In this case, the first dialog that pops up is for selection of a FASTA file (view section "File Formats" for details).
+Either way, the user has little influence on the method applied to find the $p$-value. One can change the argument "method_limit" to modify the threshold for the use of exact and approximating methods or supply a function for simulation methods which will result in the use of a simulation method. In this case, make sure to provide a suitable "simulated_sequence_length" argument, as for long sequences, the method "monteCarloKarlin" will be used.
+
+# Other Functions
+
+The package provides a number of auxiliary functions for loading or creating sequences for different models.
+
+## Lindley Process: to visualize optimal and suboptimal segments
+
+This function takes a score sequence and shows the Lindley process associated, illustrating the operation of the local score algorithm. Plotting the Lindley process provides a view of the potential optimal segments and their comparison between them.
+```{r,fig.width=7.2}
+set.seed(1)
+sequence <- sample(c(-3,2,0,1,5), 100, replace = TRUE, prob = c(0.5, 0.3, 0.05, 0.1, 0.05))
+lindley(sequence)
+plot(lindley(sequence), type ="s")
+```
+
+
+## Score Loading Function
+
+`loadScoreFromFile()` reads a csv-file returning a named list where names correspond to the first file column and values to the second file column. If a third column is available within the file, it will be read and can be accessed by name, too. An example is given in the first case study. See for example the provided files Kyte1982.txt or score_file_example.csv. The function is reading a header line by default, so be careful that you have one otherway the first score will be missed.
+
+## Empirical distribution: function "scoreSequences2probabilityVector()"
+`scoreSequences2probabilityVector()` takes in a list of score sequences and returns the resulting empirical distribution from the minimal to the maximal score value of all sequences. Thus,
+
+```{r}
+seq1 = sample(7:8, size = 10, replace = TRUE)
+seq2 = sample(2:3, size = 15, replace = TRUE)
+l = list(seq1, seq2)
+r = scoreSequences2probabilityVector(l)
+r
+length(r)
+```
+
+returns a vector of length 7, even if there are only 4 distinct unique values present in the list. Very useful for the use in any non-simulating method of $p$-value.
+
+
+# Case study
+
+## Medium sequence
+
+Sequence extracted from https://www.uniprot.org/uniprot/P49755/
+
+```{r}
+data(MidSeq)
+MySeq=MidSeq
+data(dico)
+SeqScore <- CharSequence2ScoreSequence(MySeq,dico)
+n <- length(SeqScore)
+n
+```
+
+
+### Local score computation and parameter model setings
+
+```{r}
+LS <- localScoreC(SeqScore)$localScore[1]
+LS
+```
+
+### Parameter model setings
+```{r}
+prob = scoreSequences2probabilityVector(list(SeqScore))
+prob
+``` 
+
+### Exact method
+
+```{r}
+time.daudin <- system.time(
+res.daudin <- daudin(localScore = LS, sequence_length = n,
+       score_probabilities = prob,
+       sequence_min = min(SeqScore),
+       sequence_max = max(SeqScore)))
+res.daudin
+```
+
+
+### Approximated method
+
+The call of the function `karlin()` is similar to the one of `daudin()`.
+
+```{r}
+time.karlin <- system.time(
+res.karlin <- karlin(localScore = LS, sequence_length = n,
+       score_probabilities = prob,
+       sequence_min = min(SeqScore),
+       sequence_max = max(SeqScore)))
+res.karlin
+```
+The two $p$-values are different because the sequence length $n$ is equal `r n`. It is not enough large to have a good approximation with the approximated method.
+
+### Improved approximation
+
+The call of the function `mcc()' is still the same.
+
+```{r}
+time.mcc <- system.time(
+  res.mcc <- mcc(localScore = LS, sequence_length = n,
+       score_probabilities = prob,
+       sequence_min = min(SeqScore),
+       sequence_max = max(SeqScore)))
+res.mcc
+```
+We can verify here that this approximation is more accurate than the one of Karlin *et al.* for sequences of length of several hundred components.
+
+
+### Monte Carlo
+
+Let us do a very quick empirical computation with only 200 repetitions.
+
+```{r}
+time.MonteCarlo1 <- system.time(
+res.MonteCarlo1 <- monteCarlo(local_score = LS,
+           FUN = function(x) {return(sample(x = x,size = length(x),
+                                            replace = TRUE))},
+           x=SeqScore, numSim = 200))
+res.MonteCarlo1
+```
+The $p$-value estimation is `r res.MonteCarlo1` which is around the exact value `r res.daudin`. Let us increase the number of repetition to be more accurate.
+
+```{r}
+time.MonteCarlo2 <- system.time(
+res.MonteCarlo2 <- monteCarlo(local_score = LS,
+           FUN = function(x) {return(sample(x = x,size = length(x),
+                                            replace = TRUE))},
+           x=SeqScore, numSim = 10000))
+res.MonteCarlo2
+```
+
+### Result and time computation comparison
+
+$P$-value
+```{r}
+res.pval <- c(Daudin = res.daudin, Karlin = res.karlin, MCC = res.mcc,
+  MonteCarlo1=res.MonteCarlo1, MonteCarlo1=res.MonteCarlo2)
+names(res.pval) = c("Exact","Approximation", "Improved appx","MonteCarlo1", "MonteCarlo2")
+res.pval
+```
+Computation time
+
+```{r}
+rbind(time.daudin, time.karlin, time.mcc,time.MonteCarlo1, time.MonteCarlo2)
+```
+
+Time computation for MonteCarlo method depends to the number of repetition. For medium  sequences exact method is around 30 time more time cusumming than the mcc method. Karlin's method is the fastest one but can be not accurate if the sequence are too short (here $n=219$ a couple of hundred is note enough, a thousand may be prefered to be sure of the accuracy).
+
+## Short sequence
+
+```{r}
+data(ShortSeq)
+MySeq.Short =ShortSeq
+SeqScore.Short <- CharSequence2ScoreSequence(MySeq.Short,dico)
+n.short <- length(SeqScore.Short)
+n.short
+```
+
+Sequence of length `r n.short`.
+For short sequences, it is easier and usual to obtain a positive expectation for the score. So the functions based on approximated methods can't be used and an error message is given.
+
+```{r}
+SeqScore.S <- SeqScore.Short
+LS.S <- localScoreC(SeqScore.S)$localScore[1]
+prob.S = scoreSequences2probabilityVector(list(SeqScore.S))
+
+LS.S
+prob.S
+```
+
+```{r}
+time.daudin <- system.time(
+res.daudin. <- daudin(localScore = LS.S, sequence_length = n.short,
+       score_probabilities = prob.S,
+       sequence_min = min(SeqScore.S),
+       sequence_max = max(SeqScore.S)))
+
+time.karlin <- system.time(
+res.karlin <- try(karlin(localScore = LS.S, sequence_length = n.short,
+       score_probabilities = prob.S,
+       sequence_min = min(SeqScore.S),
+       sequence_max = max(SeqScore.S))))
+
+time.mcc <- system.time(
+  res.mcc <- try(mcc(localScore = LS.S, sequence_length = n.short,
+       score_probabilities = prob.S,
+       sequence_min = min(SeqScore.S),
+       sequence_max = max(SeqScore.S))))
+
+time.karlinMonteCarlo <- system.time(
+res.karlinMonteCarlo <-
+  karlinMonteCarlo(local_score = LS.S, plot=FALSE,
+                   sequence_length = n.short,
+                   simulated_sequence_length = 1000,
+                   FUN = sample, x=min(SeqScore.S):max(SeqScore.S),
+                   size = 1000, prob=prob.S, replace=TRUE,
+                   numSim = 100000))
+
+time.MonteCarlo <- system.time(
+res.MonteCarlo <- monteCarlo(local_score = LS.S,plot=FALSE,
+           FUN = function(x) {return(sample(x = x,size = length(x),
+                                            replace = TRUE))},
+           x=SeqScore.S, numSim = 10000))
+```
+
+### Results
+
+```{r}
+res.pval <- c(Daudin = res.daudin, MonteCarlo=res.MonteCarlo)
+names(res.pval) = c("Daudin","MonteCarlo")
+res.pval
+rbind(time.daudin, time.MonteCarlo)
+```
+Here an example using another probability vector with non positive average score. In this example, the local score is very huge and realized by the whole sequence, the $p$-value is very low as confirmed by the exact method.
+
+```{r}
+set.seed(1)
+prob.bis=dnorm(-5:5, mean=-0.5, sd=1)
+prob.bis=prob.bis/sum(prob.bis)
+names(prob.bis)=-5:5
+# Score Expectation
+sum((-5:5)*prob.bis)
+
+time.mcc <- system.time(
+  res.mcc <-mcc(localScore = LS.S, sequence_length = n.short,
+       score_probabilities = prob.bis,
+       sequence_min = min(SeqScore.S),
+       sequence_max = max(SeqScore.S)))
+
+time.daudin <- system.time(
+res.daudin <- daudin(localScore = LS.S, sequence_length = n.short,
+       score_probabilities = prob.bis,
+       sequence_min = min(SeqScore.S),
+       sequence_max = max(SeqScore.S)))
+
+simu=function(n,p){return(sample(x=-5:5,size = n, replace=TRUE, prob=p))}
+time.MonteCarlo <- system.time(
+res.MonteCarlo <-
+monteCarlo(local_score = LS.S, plot=FALSE,
+           FUN = simu, n.short, prob.bis, numSim = 100000))
+```
+```{r}
+res.pval <- c(MCC=res.mcc,Daudin = res.daudin, MonteCarlo=res.MonteCarlo)
+names(res.pval) = c("MCC","Daudin","MonteCarlo")
+res.pval
+rbind(time.mcc,time.daudin, time.MonteCarlo)
+```
+
+For short sequences, exact method is fast, more precise and must be prefered.
+
+## Large sequence
+
+```{r}
+data(LongSeq)
+MySeq.Long=LongSeq
+SeqScore.Long <- CharSequence2ScoreSequence(MySeq.Long,dico)
+n.Long <- length(SeqScore.Long)
+n.Long
+SeqScore.Long <- CharSequence2ScoreSequence(MySeq.Long,dico)
+LS.L <- localScoreC(SeqScore.Long)$localScore[1]
+LS.L
+prob.L = scoreSequences2probabilityVector(list(SeqScore.Long))
+prob.L
+sum(prob.L*as.numeric(names(prob.L))) 
+```
+
+Sequence of length `r n.Long` with a local score equal to `r LS.L`. The average score is non positive so approximated methods can be used.  
+
+```{r echo=FALSE}
+time.daudin.L <- system.time(
+res.daudin.L <- daudin(localScore = LS.L, sequence_length = n.Long,
+       score_probabilities = prob.L,
+       sequence_min = min(SeqScore.Long),
+       sequence_max = max(SeqScore.Long)))
+res.daudin.L
+
+time.karlin.L <- system.time(
+res.karlin.L <- karlin(localScore = LS.L, sequence_length = n.Long,
+       score_probabilities = prob.L,
+       sequence_min = min(SeqScore.Long),
+       sequence_max = max(SeqScore.Long)))
+
+time.mcc.L <- system.time(
+  res.mcc.L <- mcc(localScore = LS.L, sequence_length = n.Long,
+       score_probabilities = prob.L,
+       sequence_min = min(SeqScore.Long),
+       sequence_max = max(SeqScore.Long)))
+
+time.MonteCarlo.L <- system.time(
+res.MonteCarlo.L <-
+  monteCarlo(local_score = LS.L,
+                   FUN = sample, x=min(SeqScore.Long):max(SeqScore.Long),
+                   size = n.Long, prob=prob.L, replace=TRUE,plot= FALSE,
+                  numSim = 100000))
+res.MonteCarlo.L
+
+time.karlinMonteCarlo.L <- system.time(
+res.karlinMonteCarlo.L <-
+  karlinMonteCarlo(local_score = LS.L,
+                   sequence_length = n.Long,
+                   simulated_sequence_length = 1000,
+                   FUN = sample, x=min(SeqScore.Long):max(SeqScore.Long),
+                   size = 1000, prob=prob.L, replace=TRUE,
+                   numSim = 100000))
+res.karlinMonteCarlo.L
+
+```
+
+### Results 
+```{r}
+res.pval.L <- c(res.daudin.L, res.mcc.L, res.karlin.L, res.karlinMonteCarlo.L$`p-value`,res.MonteCarlo.L)
+names(res.pval.L) = c("Daudin","MCC","Karlin","KarlinMonteCarlo","MonteCarlo")
+res.pval.L
+```
+
+```{r}
+rbind(time.daudin.L, time.karlin.L, time.mcc.L,time.karlinMonteCarlo.L,
+  time.MonteCarlo.L)
+```
+
+Even for large sequences of several thousands, the exact method is still fast enough but it could become too much time cusuming for a sequence data set with numerous sequences. The approximated methods must be prefered.
+
+## Several sequences
+
+The function `automatic_analysis()` can analysis a named list of sequences. It choose the adequate method for each sequence. Here in the following example, the exact method is used for the short sequence, whereas an 
+asymptotic method is used for the long one.
+
+```{r}
+MySeqsList=list(MySeq,MySeq.Short,MySeq.Long)
+names(MySeqsList)=c('Q09FU3.fasta','P49755.fasta','Q60519.fasta')
+MySeqsScore=lapply(MySeqsList, FUN=CharSequence2ScoreSequence, dico)
+AA=automatic_analysis(MySeqsScore, model='iid')
+AA$Q09FU3.fasta
+AA$Q09FU3.fasta$`method applied`
+AA$Q60519.fasta$`method applied`
+```
+
+We can observe differences between the $p$-value of the short sequence obtained in the case study for the only short sequence, and the one obtained with the automatic analysis. Note that the distribution vector of the scores used are different which induces a different $p$-value. 
+
+```{r}
+cbind(prob, prob.S, prob.L, '3 sequences'=scoreSequences2probabilityVector(MySeqsScore))
+```
+
+Using the probability vector of the three sequences to compute the $p$-value of the local score of the short sequence with the function daudin(), we recover an identical $p$-value than we have obtained with the automatic analysis().
+
+```{r}
+daudin.bis=daudin(localScore=LS.S,sequence_length = n.short, score_probabilities = scoreSequences2probabilityVector(MySeqsScore), sequence_max = 5,sequence_min = -5)
+daudin.bis
+AA$P49755.fasta$`p-value`
+
+# automatic_analysis(sequences=list('MySeq.Short'=MySeq.Short), model='iid', distribution=proba.S)
+
+```
+
+## A larger example with a SCOP data base
+
+```{r}
+library(localScore)
+data(dico)
+data(MySeqList)
+MySeqScoreList=lapply(MySeqList, FUN=CharSequence2ScoreSequence, dico)
+head(MySeqScoreList)
+AA=automatic_analysis(sequences=MySeqScoreList, model='iid')
+AA[[1]]
+# the p-value of the first 10 sequences 
+sapply(AA, function(x){x$`p-value`})[1:10]
+# the 20th smallest p-values
+sort(sapply(AA, function(x){x$`p-value`}))[1:20]
+which(sapply(AA, function(x){x$`p-value`})<0.05)
+table(sapply(AA, function(x){x$`method`}))
+# The maximum sequence length equals 404 so it here normal that the exact method is used for all the 606 sequences of the data base 
+scoreSequences2probabilityVector(MySeqScoreList)
+```
+
+# File Formats
+This package allows input in file form. For the package to work, please respect the following conventions.
+
+## Sequence Files
+The package accepts files in FASTA format: 
+Every sequence is preceeded by a title (marked by a ">") and a line break. One sequence takes one line, followed by a line break and a line only containing a tab.
+
+```
+>HUMAN_NM_018998_2
+TGAGTAGGGCTGGCAGAGCTGGGGCCTCATGGCTGTGTAGTAGCAGGCCCCCGCCCCGCGACCTGGCCAGGCGATCACTACAGCCGCCCCTGCCGAACAG
+  
+>Mouse_NM_013908_3
+CCCCATGAGGACCCAGAACCCTCAATGGAGAAGAGTCAGGATTTGCTGTGCTGCCAGAGTGAACTGGCCTGGTAATTACCCTGCAGCCTTTCTGGAACAG
+  
+>HUMAN_NM_018998_3
+GTGAGCACGGGCGGCGGGTTGACCCTGCCCCCGCCCCACGCCGACAGCCTGTCCAGCCCCGGCCTCCCCACAG
+  
+>Mouse_NM_013908_4
+GTAAGTGTGGGCATTGGGTTGGGCTACCTGTCCCATTGTGCCCTGCCAGCAGTCTGCCCAGCTGTGGCCTTCCCCCCAG
+  
+>HUMAN_NM_018998_5
+GGTGCTCACAGCCCCAGAGACACCACTGAGGTAGGAAGCTGCCCTGGAGTGATGTCCTTGGGGCATTGGACAGGGACCCTCACCGTAGCCCTCCCTGCAG
+```
+
+## Score Files
+A score file is a csv file that contains a header line and each line contains a letter and its score. Optionnally one can also provide a probability for each score.
+Example:
+
+```
+Letters,Scores,Probabilities  
+L,-2,0.04  
+M,-1,0.04  
+N,0,0.04  
+```
+
+## Transition Matrix Files
+A csv file only containing the values of the matrix.
+Example:
+
+```
+0.2,0.3,0.5  
+0.3,0.4,0.3  
+0.2,0.4,0.4  
+```
+
+# A word for Markovian model 
+
+At the present time, a markovian dependance of the components of the sequence can be taken into account using the  automatic.analysis() or monteCarlo() function. We advice the users to only use this model for small sequences **with only one or two hundreds components**. Further developpments will be made for markovian model in the next version of the package.
+
+```{r}
+MyTransMat <-
+matrix(c(0.3,0.1,0.1,0.1,0.4, 0.2,0.2,0.1,0.2,0.3, 0.3,0.4,0.1,0.1,0.1, 0.3,0.3,0.1,0.0,0.3, 
+         0.1,0.1,0.2,0.3,0.3), ncol = 5, byrow=TRUE)
+
+MySeq.CM=transmatrix2sequence(matrix = MyTransMat,length=150, score =-2:2)
+MySeq.CM
+AA.CM=automatic_analysis(sequences = list("x1" = MySeq.CM), model = "markov")
+AA.CM
+
+```
+
+With MonteCarlo method the local score $p$-value is also not significant but not very accurate. Number of simulation can not be too large as it induces a increased time computation.
+
+```{r}
+Ls.CM=AA.CM$x1$localScore[[1]][1]
+monteCarlo(local_score = Ls.CM,
+FUN = transmatrix2sequence, matrix = MyTransMat,
+length=150, score = -2:2,
+plot=FALSE, numSim = 10000)
+```
