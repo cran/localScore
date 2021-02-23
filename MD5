@@ -1,4 +1,4 @@
-85b6c28be9ae53e3860cbaf34c57ba3a *DESCRIPTION
+c45d595c76cd687e39808180ac788923 *DESCRIPTION
 cb957823d5b498e0581747f72661b40e *LICENSE
 ac8c03b8a7610089bced12a088ddec48 *NAMESPACE
 eeed3447eae630a8e852c0422fc89913 *R/RcppExports.R
@@ -12,7 +12,7 @@ dcc5d211c6174bef728a1198e1bb9302 *data/ShortSeq.rda
 84d9234eb3ba79cd2fec85a331da2514 *data/dico.rda
 0bcb4eb714b578e9467dbec98161192e *inst/doc/localScorePackageDocumentation.R
 dfbfb04f54e44930d6d35f60d1954e20 *inst/doc/localScorePackageDocumentation.Rmd
-ee2e3c5efa37ee051c7c0b25f0cf7015 *inst/doc/localScorePackageDocumentation.pdf
+454f5cb1ac4b59bd9aa2fd96ea1cf177 *inst/doc/localScorePackageDocumentation.pdf
 6df30a6be8d33ffa05fdd9edee02a8e8 *man/CharSequence2ScoreSequence.Rd
 f1d17201ca1cf27d7167fe28e28113c5 *man/CharSequences2ScoreSequences.Rd
 4625156ef97a399f72339851610a56a0 *man/LongSeq.Rd
@@ -345,7 +345,7 @@ fb00449ed85e3a51163604fe4ff5d8b7 *src/Eigen/src/plugins/MatrixCwiseUnaryOps.h
 89ca4d69a8e279eb9071006a5051e740 *src/RcppExports.cpp
 15906667c25f792b4a9a95927a78b2c2 *src/function_wrapper.cpp
 46ee0122278ffba77534aa5c3bc4d891 *src/localScoreC.cpp
-5d722eee5fa03157bb28038c81197b72 *src/pValueMethods.cpp
+af62a41872e74f2d56255a3828e8359e *src/pValueMethods.cpp
 284d8cc9970e57d27e3a7b526a3e5746 *src/pValueMethods.h
 1f2c3b60a9521dbb60066d05b2a411d1 *src/testsCpp/tests.cpp
 d7468fa903302f0291d25624e364ee04 *tests/testthat.R

@@ -390,11 +390,11 @@ double calcul_karlin(int localScore, vector<double> distribution, int u, int v, 
   // 9   Calcul probabilités S-
   vector<double> probaSmoins = calcul_TabSmoins_cas_general_complexe(roots_separated.mod_greaterequal_one, v);
   // 10  Calcul Esperance Probabilités S-
-  double ES = 0.0;
+  double ESmoins = 0.0;
   for(unsigned int s = 0; s< probaSmoins.size(); s++)
-    ES+=probaSmoins[s]*(-real(s)-1.0);
+    ESmoins+=probaSmoins[s]*(-real(s)-1.0);
   // 11   Calcul mu
-  double mu = ES/E;
+  double mu = ESmoins/E;
   // 12   Calcul K*
   //  12.1 Calcul Esperance numerateur E[e^(lambda*S-)]
   double E1 = 0.0;
@@ -442,11 +442,11 @@ double calcul_mcc(int localScore, vector<double> distribution, int u, int v, lon
   for(unsigned int s = 0; s< distribution.size(); s++)
     E+=distribution[s]*(s-v);
   //9  Calcul E[S-]
-  double ES = 0.0;
+  double ESmoins = 0.0;
   for(unsigned int s = 0; s< probaSmoins.size(); s++)
-    ES+=probaSmoins[s]*(-s-1);
+    ESmoins+=probaSmoins[s]*(-s-1);
   //10  Calcul mu
-  double mu = ES/E;
+  double mu = ESmoins/E;
   //11 Calcul lambda
   double lambda = log(1/roots_separated.mod_smaller_one[0].real());
   //12 Substitution x
