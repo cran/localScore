@@ -1,5 +1,5 @@
 #define BOOST_TEST_MODULE First_TestSuite
-#include "../Eigen/src/Core/util/DisableStupidWarnings.h"
+//#include "../Eigen/src/Core/util/DisableStupidWarnings.h"
 #include <boost/test/included/unit_test.hpp>
 #include "../pValueMethods.h"
 #include <iostream>

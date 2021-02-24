@@ -1,8 +1,7 @@
 #include <Rcpp.h>
 #include "pValueMethods.h"
-#include "malloc.h"
+//#include "malloc.h"
 
-//#include "Eigen/src/Core/util/DisableStupidWarnings.h"
 #include "Eigen/Dense"
 
 using namespace Rcpp;

@@ -1,10 +1,10 @@
-c45d595c76cd687e39808180ac788923 *DESCRIPTION
+bf924cc62baa98f0d5697399a30ffe6d *DESCRIPTION
 cb957823d5b498e0581747f72661b40e *LICENSE
 ac8c03b8a7610089bced12a088ddec48 *NAMESPACE
 eeed3447eae630a8e852c0422fc89913 *R/RcppExports.R
 4a78bef97d00a440fd81455be6e97388 *R/data.R
 61a9b6114684e3aab6d7741a1b0ad0d7 *R/rMethods.R
-238755aaa92faf047d1b9912640fc638 *build/vignette.rds
+72ea383f039352529b223f5453e37dc3 *build/vignette.rds
 615422083fed1390ecb396a9bd13a1d4 *data/LongSeq.rda
 c3c5fe0ac6a98a089c19deb138ba5dce *data/MidSeq.rda
 16e99d01cd60f1e2d3447b681e13c00e *data/MySeqList.rda
@@ -12,7 +12,7 @@ dcc5d211c6174bef728a1198e1bb9302 *data/ShortSeq.rda
 84d9234eb3ba79cd2fec85a331da2514 *data/dico.rda
 0bcb4eb714b578e9467dbec98161192e *inst/doc/localScorePackageDocumentation.R
 dfbfb04f54e44930d6d35f60d1954e20 *inst/doc/localScorePackageDocumentation.Rmd
-454f5cb1ac4b59bd9aa2fd96ea1cf177 *inst/doc/localScorePackageDocumentation.pdf
+b3249d82e0f7d54697cbd2e1aaac0edd *inst/doc/localScorePackageDocumentation.html
 6df30a6be8d33ffa05fdd9edee02a8e8 *man/CharSequence2ScoreSequence.Rd
 f1d17201ca1cf27d7167fe28e28113c5 *man/CharSequences2ScoreSequences.Rd
 4625156ef97a399f72339851610a56a0 *man/LongSeq.Rd
@@ -343,11 +343,11 @@ cb4d530d0038b2636ddb11a4bcc62fe2 *src/Eigen/src/misc/lapacke.h
 b26cda2639952d445dba2d5d098b56d8 *src/Eigen/src/plugins/MatrixCwiseBinaryOps.h
 fb00449ed85e3a51163604fe4ff5d8b7 *src/Eigen/src/plugins/MatrixCwiseUnaryOps.h
 89ca4d69a8e279eb9071006a5051e740 *src/RcppExports.cpp
-15906667c25f792b4a9a95927a78b2c2 *src/function_wrapper.cpp
+4a706a0bacf199a4f99064df38353086 *src/function_wrapper.cpp
 46ee0122278ffba77534aa5c3bc4d891 *src/localScoreC.cpp
 af62a41872e74f2d56255a3828e8359e *src/pValueMethods.cpp
 284d8cc9970e57d27e3a7b526a3e5746 *src/pValueMethods.h
-1f2c3b60a9521dbb60066d05b2a411d1 *src/testsCpp/tests.cpp
+42985f22139cb6e007fe62a837e361e6 *src/testsCpp/tests.cpp
 d7468fa903302f0291d25624e364ee04 *tests/testthat.R
 ba25265d94b76c00b09e9f44c0ae553c *tests/testthat/test-localScoreC.R
 895344a177f8a5e9b620f6631b82ceb5 *tests/testthat/test-markov_generic.R
