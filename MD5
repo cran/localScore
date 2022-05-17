@@ -1,10 +1,10 @@
-bf924cc62baa98f0d5697399a30ffe6d *DESCRIPTION
+51afbcc80b2f001536b8e5755b83d4ba *DESCRIPTION
 cb957823d5b498e0581747f72661b40e *LICENSE
 ac8c03b8a7610089bced12a088ddec48 *NAMESPACE
 eeed3447eae630a8e852c0422fc89913 *R/RcppExports.R
 4a78bef97d00a440fd81455be6e97388 *R/data.R
 61a9b6114684e3aab6d7741a1b0ad0d7 *R/rMethods.R
-72ea383f039352529b223f5453e37dc3 *build/vignette.rds
+481ef0feb09e45800db44d33b275f703 *build/vignette.rds
 615422083fed1390ecb396a9bd13a1d4 *data/LongSeq.rda
 c3c5fe0ac6a98a089c19deb138ba5dce *data/MidSeq.rda
 16e99d01cd60f1e2d3447b681e13c00e *data/MySeqList.rda
@@ -12,7 +12,7 @@ dcc5d211c6174bef728a1198e1bb9302 *data/ShortSeq.rda
 84d9234eb3ba79cd2fec85a331da2514 *data/dico.rda
 0bcb4eb714b578e9467dbec98161192e *inst/doc/localScorePackageDocumentation.R
 dfbfb04f54e44930d6d35f60d1954e20 *inst/doc/localScorePackageDocumentation.Rmd
-b3249d82e0f7d54697cbd2e1aaac0edd *inst/doc/localScorePackageDocumentation.html
+42c3964855d2014585fb5f7f9a0b88d7 *inst/doc/localScorePackageDocumentation.pdf
 6df30a6be8d33ffa05fdd9edee02a8e8 *man/CharSequence2ScoreSequence.Rd
 f1d17201ca1cf27d7167fe28e28113c5 *man/CharSequences2ScoreSequences.Rd
 4625156ef97a399f72339851610a56a0 *man/LongSeq.Rd
@@ -80,7 +80,7 @@ f59c7074c241180a9135878387652c64 *src/Eigen/src/Cholesky/LLT_LAPACKE.h
 4dc0598b9af2fc9ae8f0a9b7525fdb04 *src/Eigen/src/Core/ArrayBase.h
 6a502320c1d519379505733b5a55be35 *src/Eigen/src/Core/ArrayWrapper.h
 1a8c1b1f485a5e4fa9216e03347be30a *src/Eigen/src/Core/Assign.h
-dd2ec1cfa5a9137336577f540882a409 *src/Eigen/src/Core/AssignEvaluator.h
+0c37f13213f46427ddf766ec8c7e83ef *src/Eigen/src/Core/AssignEvaluator.h
 cce82f6e08237123f090ce44ce553f8d *src/Eigen/src/Core/Assign_MKL.h
 d2608021953a5761b204c0acba38fdc8 *src/Eigen/src/Core/BandMatrix.h
 0b1e882eabf66a5a7a0365ac188f4361 *src/Eigen/src/Core/Block.h
@@ -180,7 +180,7 @@ bcde622f6e8f3fa6a22feccb4907518f *src/Eigen/src/Core/functors/TernaryFunctors.h
 acae489090a262824d42d3b6b473eb18 *src/Eigen/src/Core/products/GeneralMatrixMatrixTriangular.h
 ec4bdbcf13475666d8023d13b2f7f0ac *src/Eigen/src/Core/products/GeneralMatrixMatrixTriangular_BLAS.h
 1ef8918a99d1cd3481837f87d2162291 *src/Eigen/src/Core/products/GeneralMatrixMatrix_BLAS.h
-3d83ef8a7bb94ee252c4bdc4d20e09af *src/Eigen/src/Core/products/GeneralMatrixVector.h
+13f10ad4e178e3b8c0e120677d942801 *src/Eigen/src/Core/products/GeneralMatrixVector.h
 2f7b591b2eabbae7df8b4597606822a2 *src/Eigen/src/Core/products/GeneralMatrixVector_BLAS.h
 540fbd8f1db9d9e1fae7d05e5f832d8b *src/Eigen/src/Core/products/Parallelizer.h
 bca266bdcbb48f7832988b4e1231ddab *src/Eigen/src/Core/products/SelfadjointMatrixMatrix.h
@@ -205,7 +205,7 @@ e80786746d566652278b0760c102638d *src/Eigen/src/Core/util/Macros.h
 a3ad2e58c3ef8bed743b616e157219f6 *src/Eigen/src/Core/util/Meta.h
 c4ca2e16c302c71df98732240109e7e0 *src/Eigen/src/Core/util/NonMPL2.h
 0ab9bbf3642f264beba860d0d7c083ef *src/Eigen/src/Core/util/ReenableStupidWarnings.h
-f9d27c273cb5fa7e9889dc19401b3026 *src/Eigen/src/Core/util/StaticAssert.h
+de5e6d650f7f53b29208f7d742e986a7 *src/Eigen/src/Core/util/StaticAssert.h
 180d23321a44be3aacf7854d828c4451 *src/Eigen/src/Core/util/XprHelper.h
 adbf8d0af9de7cb9182dfcc427b50d58 *src/Eigen/src/Eigenvalues/ComplexEigenSolver.h
 f4645064cb662c2d5ac25ce6eca97cb8 *src/Eigen/src/Eigenvalues/ComplexSchur.h
@@ -342,7 +342,7 @@ cb4d530d0038b2636ddb11a4bcc62fe2 *src/Eigen/src/misc/lapacke.h
 479838c0f2f04721b4ea5186271b9715 *src/Eigen/src/plugins/CommonCwiseUnaryOps.h
 b26cda2639952d445dba2d5d098b56d8 *src/Eigen/src/plugins/MatrixCwiseBinaryOps.h
 fb00449ed85e3a51163604fe4ff5d8b7 *src/Eigen/src/plugins/MatrixCwiseUnaryOps.h
-89ca4d69a8e279eb9071006a5051e740 *src/RcppExports.cpp
+b7eec2e2cacffc92a55b061fcf6467a1 *src/RcppExports.cpp
 4a706a0bacf199a4f99064df38353086 *src/function_wrapper.cpp
 46ee0122278ffba77534aa5c3bc4d891 *src/localScoreC.cpp
 af62a41872e74f2d56255a3828e8359e *src/pValueMethods.cpp

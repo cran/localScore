@@ -5,6 +5,11 @@
 
 using namespace Rcpp;
 
+#ifdef RCPP_USE_GLOBAL_ROSTREAM
+Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
+Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
+#endif
+
 // daudin
 double daudin(int localScore, int sequence_length, NumericVector score_probabilities, int sequence_min, int sequence_max);
 RcppExport SEXP _localScore_daudin(SEXP localScoreSEXP, SEXP sequence_lengthSEXP, SEXP score_probabilitiesSEXP, SEXP sequence_minSEXP, SEXP sequence_maxSEXP) {
