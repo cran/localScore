@@ -36,52 +36,52 @@
 #'           length=150, score = c(-2,-1,0,2,3), plot=FALSE, numSim = 5000)
 #' }
 #' @export
-monteCarlo <- function (local_score, FUN, ..., plot = TRUE, numSim = 1000){
-  epsilon = 1e-8 #Awfull trick used to correct CdF in cas of discrete score values
-  if(local_score<0)
+monteCarlo <- function(local_score, FUN, ..., plot = TRUE, numSim = 1000){
+  epsilon <- 1e-8 #Awfull trick used to correct CdF in cas of discrete score values
+  if (local_score < 0)
     stop("[Invalid Input] local scores are never negative.")
-  if(numSim<=0)
+  if (numSim <= 0)
     stop("[Invalid Input] Please supply a positive number of simulations.")
   #simulate sequences to get some local scores to work with
-  maxScores = sim_local_scores(numSim = numSim, func = FUN, ...)
+  maxScores <- sim_local_scores(numSim = numSim, func = FUN, ...)
   #empirical distribution of found local Scores
-  scoreCdf = ecdf(maxScores)
+  scoreCdf <- ecdf(maxScores)
   #Compute Density
   scoreD = NULL
-  smin = min(knots(scoreCdf))
-  smax = max(knots(scoreCdf))
+  smin <- min(knots(scoreCdf))
+  smax <- max(knots(scoreCdf))
   for (k in smin:smax) { 
-    scoreD[k-smin+1]=scoreCdf(k)-scoreCdf(k-1)
+    scoreD[k - smin + 1] <- scoreCdf(k) - scoreCdf(k - 1)
   }
   names(scoreD) = smin:smax
   #if the user wants to display the distribution of local scores, print it to the plot screen
-  if(plot){
+  if (plot) {
     #set plot window
     oldpar <- par(no.readonly = TRUE) 
     on.exit(par(oldpar))
-    par(mfrow =(c(1,2)))
-    colors <- rep("gray", smax-smin+1)
-    if(local_score >= smin & local_score<=smax)
+    par(mfrow = c(1,2))
+    colors <- rep("gray", smax - smin + 1)
+    if (local_score >= smin & local_score <= smax)
       colors[as.character(local_score)] = "red"
-    barplot(scoreD, main = "Distribution of local scores [iid]\n for given sequence", ylab = "Probability", xlab = "local Scores", col=colors, border = "white", space = 0.1)
-    plot(scoreCdf, main="Cumulative Distribution Function", ylab="cumulative destribution(local_scores)))", xlab="Local Score Values")
-    abline(v=local_score, col="red",lty=3)  #greater or equal, thus set marker at localScore -1
-    abline(h=scoreCdf(local_score), col="red",lty=3)
+    barplot(scoreD, main = "Distribution of local scores [iid]\n for given sequence", ylab = "Probability", xlab = "local Scores", col = colors, border = "white", space = 0.1)
+    plot(scoreCdf, main = "Cumulative Distribution Function", ylab = "cumulative destribution(local_scores)))", xlab = "Local Score Values")
+    abline(v = local_score, col = "red",lty = 3)  #greater or equal, thus set marker at localScore -1
+    abline(h = scoreCdf(local_score), col = "red",lty = 3)
   }
-  result = 1-scoreCdf(local_score*(1-epsilon))
-  names(result) = c("p-value")
-  return (result)
+  result <- 1 - scoreCdf(local_score * (1 - epsilon))
+  names(result) <- c("p-value")
+  return(result)
 }
 
-sim_local_scores <- function (func, ..., numSim = 1000){
-  #creates a vector of numSim localScores of numSim simulated sequences by the function passed
-  maxScores = vector(mode="numeric", length=numSim)
-  
-  for(i in 1:numSim){
-    simSequence = func(...)
-    maxScores[i] <- localScoreC(simSequence,supressWarnings = TRUE)$localScore["value"]
+sim_local_scores <- function(func, ..., numSim = 1000) {
+  # creates a vector of numSim localScores of numSim simulated sequences by the function passed
+  maxScores <- vector(mode = "numeric", length = numSim)
+
+  for (i in 1:numSim) {
+    simSequence <- func(...)
+    maxScores[i] <- localScoreC(simSequence, supressWarnings = TRUE)$localScore["value"]
   }
-  return (maxScores)
+  return(maxScores)
 }
 
 
@@ -164,14 +164,16 @@ sim_local_scores_double <- function (func, ..., numSim = 1000){
 #' plot(1:length(seq),lindley(seq),type='b')
 #' @export
 lindley <- function(sequence){
+  seq = rep(NA,length(sequence))
+  i=1
   sum = 0
-  seq = c()
   for( score in sequence){
     if(sum+score<=0)
       sum=0
     else
       sum=score+sum
-    seq=c(seq, sum)
+    seq[i]= sum
+    i=i+1
   }
   return (seq)
 }
@@ -222,7 +224,7 @@ karlinMonteCarlo <- function (local_score, sequence_length, simulated_sequence_l
   log_cumsum <- log_cumsum[is.finite(log_cumsum)]
   
   #linear regression (Warning : at least two different simulated values of MaxScores needed)
-  if (length(log_cumsum)<2) {
+  if (length(log_cumsum) < 2) {
     p_value = NA
     k_star = NA
     lambda = NA
@@ -235,13 +237,13 @@ karlinMonteCarlo <- function (local_score, sequence_length, simulated_sequence_l
     x <- local_score - log(sequence_length)/lambda
     #Karlin: for n great, P( ln(n)/lambda+x>= M) = exp(-K_star*exp(-lambda*x))
     #thus we set ln(n)/lambda+x = local_score and obtain for x = local_score - ln(n)/lambda
-    #x = local_score - log(sequence_length)/lambda#-1 ?
+    #x = local_score - log(sequence_length)/lambda#-1 ? XXX a priori oui, il faut le '-1' (cf le code C++)
     
     #now we calculate p-value with our approximate K star and lambda
     p_value <- exp(-k_star*exp(-lambda*x))
   }
   result <- list("p-value" = 1 - p_value, "K*" = as.numeric(k_star), "lambda" = as.numeric(lambda))
-  if(plot){
+  if (plot){
     #set plot window to contain 3 slots
     oldpar <- par(no.readonly = TRUE) 
     on.exit(par(oldpar))
@@ -450,7 +452,7 @@ loadCharSequencesFromFile <- function(filepath){
 #' @description Reads a csv file with 2-3 columns and returns it as a list object of vectors, with names corresponding to the first column of the file. For details view section "File Formats" in vignette.
 #' @param filepath optional: location of file on disk. If not provided, a file picker dialog will be opened.
 #' @param ... optional: use arguments from read.csv
-#' @return A List Object - Names correspond to the first column, usually Letters. If probabilities are provided, 
+#' @return A List Object - Names correspond to the first column, usually Letters. Associated numerical scores are in the second column. If probabilities are provided, 
 #' they will be loaded too and presumed to be in the third column
 #' @export
 loadScoreFromFile <- function(filepath, ...){
@@ -461,10 +463,20 @@ loadScoreFromFile <- function(filepath, ...){
   if(missing(filepath))
     filepath = file.choose()
   obj = read.csv(filepath, ...)
+  #File content checks
+  if (!is.numeric(obj[,2]))
+    stop("This file is incompatible with the required format. Second column should contains numerical values")
+  if (length(obj) > 2) {
+    if (!sum(obj[,3]) == 1)
+      stop("This file is incompatible with the required format. Third column should sum to 1 (probabilities)")
+    if (!all(obj[,3] >= 0) && !all(obj[,3] <= 1))
+      stop("This file is incompatible with the required format. Third column values should be between 0 and 1 (probabilities)")
+  }
+    
   dic = list()
   if(length(obj) > 2){
     for(i in 1:nrow(obj))
-      dic[[as.character(obj[i,1])]]=list(obj[i,2], obj[i,3])
+      dic[[as.character(obj[i,1])]] <- list(obj[i,2], obj[i,3])
   }
   else if(length(obj) == 2){
     for(i in 1:nrow(obj))
@@ -472,7 +484,7 @@ loadScoreFromFile <- function(filepath, ...){
   }  
   else
     warning("This file is incompatible with the required format. Please check the documentation, chapter FILE FORMATS")
-  return (dic)
+  return(dic)
 }
 
 #' @title Loads matrix from csv-File
@@ -554,7 +566,7 @@ File2CharSequences = function(filepath) {
     }
   }
   close(con)
-  return (sequenceList)
+  return(sequenceList)
 }
 
 #' @title Empirical distribution from sequences
@@ -600,8 +612,8 @@ scoreSequences2probabilityVector <- function(sequences){
 #' a distribution, then yours - to calculate the p-value based on the length of each of the sequences
 #' given as input. \cr 
 #' You can influence the choice of the method by providing the modelFunc argument. In this case, the
-#' function uses exclusively simulation methods (monte_carlo, monte_carlo_karlin).  \cr 
-#' By setting the method_limit you can further decide to which extent computation-intensive methods (daudin, exact_mcc)
+#' function uses exclusively simulation methods (monteCarlo, karlinMonteCarlo).  \cr 
+#' By setting the method_limit you can further decide to which extent computation-intensive methods (daudin, exact_mc)
 #' should be used to calculate the p-value.
 #' Remark that the warnings of the localScoreC() function have be deleted when called by automatic_analysis() function
 #' @param sequences sequences to be analysed (named list)
@@ -644,9 +656,9 @@ scoreSequences2probabilityVector <- function(sequences){
 #' MySeq.CM2=transmatrix2sequence(matrix = MyTransMat,length=110, score =-2:2)
 #' automatic_analysis(sequences = list("x1" = MySeq.CM, "x2" = MySeq.CM2), model = "markov")
 #' @export
-automatic_analysis <-function(sequences, model, scores, transition_matrix, distribution, method_limit = 2000, score_extremes, modelFunc, simulated_sequence_length = 1000, ...){
+automatic_analysis <- function(sequences, model, scores, transition_matrix, distribution, method_limit = 2000, score_extremes, modelFunc, simulated_sequence_length = 1000, ...){
   #1 Check if the model of the sequences can be deduced
-  if((missing(model) && missing(transition_matrix) && missing(distribution))||(missing(model) && !missing(transition_matrix) && !missing(distribution)))
+  if((missing(model) && missing(transition_matrix) && missing(distribution)) || (missing(model) && !missing(transition_matrix) && !missing(distribution)))
     stop("unclear which model is used for sequence creation. Please provide either the model to be used, a transition matrix or a distribution vector.")
   #2 if model is missing, deduce it from perhaps present transition matrix
   if(missing(model)){
@@ -686,8 +698,9 @@ automatic_analysis <-function(sequences, model, scores, transition_matrix, distr
     score_extremes = c(min, max)
   }
   #6 Setup Progress Bar
-  progressBar = txtProgressBar(min = 0, max = length(sequences), initial = 0, char = "=",
-                               width = NA, "progress in sequence analysis", "progressbar", style = 3, file = "")
+  if (interactive())
+    progressBar = txtProgressBar(min = 0, max = length(sequences), initial = 0, char = "=",
+                                 width = NA, "progress in sequence analysis", "progressbar", style = 3, file = "")
   progressCounter = 0;
   #7 model specific behaviour
   if(model == "markov"){
@@ -703,14 +716,16 @@ automatic_analysis <-function(sequences, model, scores, transition_matrix, distr
         sequence_length = length(sequences[[name]])
         if(sequence_length<=method_limit){
           method = "Exact Method"
-          p_value = exact_mc(transition_matrix, localscore$localScore[1], sequence_length, sequence_min = score_extremes[1], sequence_max = score_extremes[2])
+          p_value = exact_mc(localscore$localScore[1], transition_matrix, sequence_length, score_extremes[1]:score_extremes[2])
+#          p_value = exact_mc(transition_matrix, localscore$localScore[1], sequence_length, sequence_min = score_extremes[1], sequence_max = score_extremes[2])
           results[[name]] = list("p-value" = p_value, "method applied" = method, "localScore" = localscore)
         } else {
           warning(paste(c("[Ignoring Sequence] sequence length ", name, " is of length ", sequence_length), collapse=""))
           results[[name]] = list("localScore" = localscore)
         }
         progressCounter = progressCounter + 1
-        setTxtProgressBar(progressBar, progressCounter)
+        if (interactive())
+          setTxtProgressBar(progressBar, progressCounter)
       }
     } else {
       #Function supplied, using simulation methods for Markov Chain p value determination
@@ -734,7 +749,8 @@ automatic_analysis <-function(sequences, model, scores, transition_matrix, distr
           }
         }
         progressCounter = progressCounter + 1
-        setTxtProgressBar(progressBar, progressCounter)
+        if (interactive())
+          setTxtProgressBar(progressBar, progressCounter)
       }
     }
   } 
@@ -752,11 +768,8 @@ automatic_analysis <-function(sequences, model, scores, transition_matrix, distr
       }
     }
     
-    
     # Moyenne des scores sur l'ensemble de la liste
-    MeanDistribution=sum(as.integer(names(distribution))*distribution)
-    
-    
+    MeanDistribution = sum(as.integer(names(distribution))*distribution)
     
     if(missing(modelFunc)){
       for (name in names(sequences)){
@@ -788,7 +801,8 @@ automatic_analysis <-function(sequences, model, scores, transition_matrix, distr
           }
         }
         progressCounter = progressCounter + 1
-        setTxtProgressBar(progressBar, progressCounter)      
+        if (interactive())
+          setTxtProgressBar(progressBar, progressCounter)      
       }
     } else {
       #Function supplied, using simulation methods for iid p value determination
@@ -811,18 +825,18 @@ automatic_analysis <-function(sequences, model, scores, transition_matrix, distr
           }
         }
         progressCounter = progressCounter + 1
-        setTxtProgressBar(progressBar, progressCounter)
+        if (interactive())
+          setTxtProgressBar(progressBar, progressCounter)
       }
     }
   } 
   else {
     stop("unknown model. Please mention either iid or markov.")
   }
-  close(progressBar)
+  if (interactive())
+    close(progressBar)
   return(results)
 }
-
-
 
 #' @title Check for missing scores values in the score distribution
 #' @description Get extremes scores, then create a complete list and set a probability equal to zeros for not present scores

@@ -11,7 +11,7 @@
 #include "SparseCore"
 #include "OrderingMethods"
 
-//DAV #include "src/Core/util/DisableStupidWarnings.h"
+#include "src/Core/util/DisableStupidWarnings.h"
 
 /** 
   * \defgroup IterativeLinearSolvers_Module IterativeLinearSolvers module

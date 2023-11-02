@@ -10,7 +10,7 @@
 
 #include "Core"
 
-//DAV #include "src/Core/util/DisableStupidWarnings.h"
+#include "src/Core/util/DisableStupidWarnings.h"
 
 #include <vector>
 #include <map>

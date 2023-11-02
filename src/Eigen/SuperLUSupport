@@ -10,7 +10,7 @@
 
 #include "SparseCore"
 
-//DAV #include "src/Core/util/DisableStupidWarnings.h"
+#include "src/Core/util/DisableStupidWarnings.h"
 
 #ifdef EMPTY
 #define EIGEN_EMPTY_WAS_ALREADY_DEFINED

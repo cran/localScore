@@ -13,7 +13,7 @@ stationary_distribution(m)
 A vector with the probabilities
 }
 \description{
-Calculates stationary distribution of markov transitition matrix by use of eigenvectors of length 1
+Calculates stationary distribution of markov transition matrix by use of eigenvectors of length 1
 }
 \examples{
 B = t(matrix (c(0.2, 0.8, 0.4, 0.6), nrow = 2))

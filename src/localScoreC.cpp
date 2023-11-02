@@ -38,7 +38,7 @@ using namespace Rcpp;
 //' @export
 // [[Rcpp::export]] 
 List localScoreC(std::vector<int> v, bool supressWarnings = false) {
-  NumericMatrix localScores(std::round(v.size()/2), 3);
+  NumericMatrix localScores(std::round(v.size()/2)+1, 3); 
   int numberOfLocalScores = 0;
   std::vector<int> globalMaxScore;
   globalMaxScore.push_back(0);
@@ -48,6 +48,7 @@ List localScoreC(std::vector<int> v, bool supressWarnings = false) {
   localMaxScore.push_back(0);
   localMaxScore.push_back(0); 
   std::vector<int> tempsRecords;
+  //tempsRecords.push_back(0); // XXX Ajout David
   int sum = 0;
   float average = accumulate(v.begin(), v.end(), 0.0) / v.size();
   if (average >= 0.0 && !supressWarnings)
@@ -58,7 +59,7 @@ List localScoreC(std::vector<int> v, bool supressWarnings = false) {
     if(sum + v[index] <= 0){
       sum = 0;
     } else { // alors on va être dans une "vraie" excursion (ie strictt positive)
-      if (sum==0){  // on sera au tout début d'une vraie excursion et on vient de finir la montagen précédente
+      if (sum==0){  // on sera au tout début d'une vraie excursion et on vient de finir la montagne précédente
         if(localMaxScore[0] > 0){ //new temps de record au sens indice de début d'une "vraie" excursion
           localScores(numberOfLocalScores, 0) = localMaxScore[0]; 
           localScores(numberOfLocalScores, 1) = tempsRecords[tempsRecords.size()-1]; 
@@ -95,7 +96,8 @@ List localScoreC(std::vector<int> v, bool supressWarnings = false) {
     }
   }// fin if localMaxScore[0] > 0)
 
-  NumericMatrix finalScores(1,3);
+  int fixNoScoreMatrixSize = (numberOfLocalScores==0) ? 1 : 0; // needed to create finalScores Matrix in case of no localScore found
+  NumericMatrix finalScores(numberOfLocalScores+fixNoScoreMatrixSize,3);
   NumericVector glMxScore = NumericVector::create(Named("value") = globalMaxScore[0], Named("begin") = globalMaxScore[1], Named("end") = globalMaxScore[2]);
   if(numberOfLocalScores==0){ // pas de vraie excrusion 
     if(!supressWarnings)
@@ -213,7 +215,7 @@ List localScoreC_double(std::vector<double> v, bool supressWarnings = false) {
     }
   }
   
-  NumericMatrix finalScores;
+  NumericMatrix finalScores;  // XX no size initialisation ?
   if(numberOfLocalScores==0){
     if(!supressWarnings)
       warning("No local score found");

@@ -21,7 +21,11 @@ daudin <- function(localScore, sequence_length, score_probabilities, sequence_mi
 }
 
 #' @description Calculates an approximated p-value of a given local score value and a long sequence length in the identically and independantly distributed model for the sequence. See also mcc() function for another approximated method in the i.i.d. model 
-#' @details This method works the better the longer the sequence is. 
+#' @details This method works the better the longer the sequence is. Important note : the calculus of the parameter of the distribution uses
+#' the resolution of a polynome which is a function of the score distribution, of order max(score)-min(score). There exists only empirical methods to solve a polynome of order greater that 5
+#' with no warranty of reliable solution.
+#' The found roots are checked internally to the function and an error message is throw in case of inconsistent. In such case, you could try to change your score scheme (in case of discretization)
+#' or use the function \code{\link{karlinMonteCarlo}} .
 #' @title Karlin [p-value] [iid]
 #' @return A double representing the probability of a localScore as high as the one given as argument
 #' @param localScore the observed local score
@@ -38,7 +42,11 @@ karlin <- function(localScore, sequence_length, score_probabilities, sequence_mi
 
 #' @description Calculates an approximated p-value for a given local score value and a medium to long sequence length in the identically and independantly distributed model
 #' @details This methods is actually an improved method of Karlin and produces more precise results. It should be privileged whenever possible. \cr
-#' As with karlin, the method works the better the longer the sequence.
+#' As with karlin, the method works the better the longer the sequence. Important note : the calculus of the parameter of the distribution uses
+#' the resolution of a polynome which is a function of the score distribution, of order max(score)-min(score). There exists only empirical methods to solve a polynome of order greater that 5
+#' with no warranty of reliable solution.
+#' The found roots are checked internally to the function and an error message is throw in case of inconsistency. In such case, you could try to change your score scheme (in case of discretization)
+#' or use the function \code{\link{karlinMonteCarlo}} .
 #' @title MCC [p-value] [iid]
 #' @return A double representing the probability of a local score as high as the one given as argument
 #' @param localScore the observed local score
@@ -54,7 +62,26 @@ mcc <- function(localScore, sequence_length, score_probabilities, sequence_min, 
     .Call('_localScore_mcc', PACKAGE = 'localScore', localScore, sequence_length, score_probabilities, sequence_min, sequence_max)
 }
 
-#' @description Calculates stationary distribution of markov transitition matrix by use of eigenvectors of length 1
+#' @description Calculates the distribution of the maximum of the partial sum process for a given value in the identically and independantly distributed model
+#' @details Implement the formula (4) of the article Mercier, S., Cellier, D., & Charlot, D. (2003). An improved approximation for assessing the statistical significance of molecular sequence features. Journal of Applied Probability, 40(2), 427-441. doi:10.1239/jap/1053003554 \cr
+#' Important note : the calculus of the parameter of the distribution uses
+#' the resolution of a polynome which is a function of the score distribution, of order max(score)-min(score). There exists only empirical methods to solve a polynome of order greater that 5
+#' with no warranty of reliable solution.
+#' The found roots are checked internally to the function and an error message is throw in case of inconsistency. 
+#' @title Maximum of the partial sum [probability] [iid]
+#' @return A double representing the probability of the maximum of the partial sum process equal to k
+#' @param k value at which calculates the probability
+#' @param score_probabilities the probabilities for each unique score from lowest to greatest
+#' @param sequence_min minimum score
+#' @param sequence_max maximum score
+#' @examples 
+#' maxPartialSumd(10, c(0.08, 0.32, 0.08, 0.00, 0.08, 0.00, 0.00, 0.08, 0.02, 0.32, 0.02), -6, 4)
+#' @export
+maxPartialSumd <- function(k, score_probabilities, sequence_min, sequence_max) {
+    .Call('_localScore_maxPartialSumd', PACKAGE = 'localScore', k, score_probabilities, sequence_min, sequence_max)
+}
+
+#' @description Calculates stationary distribution of markov transition matrix by use of eigenvectors of length 1
 #' @title Stationary distribution [Markov chains]
 #' @return A vector with the probabilities
 #' @param m Transition Matrix [matrix object]
@@ -66,21 +93,30 @@ stationary_distribution <- function(m) {
     .Call('_localScore_stationary_distribution', PACKAGE = 'localScore', m)
 }
 
-#' @description Calculates the exact p-value for short numerical Markov chains. Time computation can be too large for a sequence length of several thousands, specially for a data set.
+#' @description Calculates the exact p-value for short numerical Markov chains. Memory usage and time computation can be too large for a high local score value and high score range (see details).
 #' @title Exact method for p-value [Markov chains]
 #' @return A double representing the probability of a localScore as high as the one given as argument
-#' @param m Transition matrix [matrix object]
-#' @param sequence_length length of the sequence
-#' @param localScore score for which the p-value should be calculated
-#' @param sequence_min minimum score
-#' @param sequence_max maximum score
+#' @param localScore Integer local score for which the p-value should be calculated
+#' @param m Transition matrix [matrix object]. Optionnaly, rownames can be corresponding score values. m should be a transition matrix of an ergodic Markov chain.
+#' @param sequence_length Length of the sequence
+#' @param score_values A integer vector of sequence score values (optional). If not set, the rownames of m are used if they are numeric and set.
+#' @param prob0 Vector of probability distribution of the first score of the sequence (optional). If not set, the stationnary distribution of m is used.
+#' @details This method computation needs to allocate a square matrix of size localScore^(range(score_values)). This matrix is then exponentiated to sequence_length.
 #' @examples 
-#' matrix = t(matrix(c(0.2, 0.3, 0.5, 0.3, 0.4, 0.3, 0.2, 0.4, 0.4), nrow = 3))
-#' exact_mc(localScore = 12, m = matrix, sequence_length = 100, sequence_min = -1, sequence_max = 1)
-#' exact_mc(localScore = 150, m = matrix, sequence_length = 1000, sequence_min = -1, sequence_max = 1)
+#' mTransition <- t(matrix(c(0.2, 0.3, 0.5, 0.3, 0.4, 0.3, 0.2, 0.4, 0.4), nrow = 3))
+#' scoreValues <- -1:1
+#' initialProb <- stationary_distribution(mTransition)
+#' exact_mc(localScore = 12, m = mTransition, sequence_length = 100, 
+#'         score_values = scoreValues, prob0 = initialProb)
+#' exact_mc(localScore = 150, m = mTransition, sequence_length = 1000, 
+#'          score_values = scoreValues, prob0 = initialProb)
+#' rownames(mTransition) <- scoreValues
+#' exact_mc(localScore = 12, m = mTransition, sequence_length = 100, prob0 = initialProb)
+#' # Minimal specification
+#' exact_mc(localScore = 12, m = mTransition, sequence_length = 100)
 #' @export
-exact_mc <- function(m, localScore, sequence_length, sequence_min, sequence_max) {
-    .Call('_localScore_exact_mc', PACKAGE = 'localScore', m, localScore, sequence_length, sequence_min, sequence_max)
+exact_mc <- function(localScore, m, sequence_length, score_values = NULL, prob0 = NULL) {
+    .Call('_localScore_exact_mc', PACKAGE = 'localScore', localScore, m, sequence_length, score_values, prob0)
 }
 
 #' @description Calculates the local score for a sequence of integer scores. Only provides the

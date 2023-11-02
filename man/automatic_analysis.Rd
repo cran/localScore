@@ -60,8 +60,8 @@ The function then either uses empirical distribution based on your input - or if
 a distribution, then yours - to calculate the p-value based on the length of each of the sequences
 given as input. \cr 
 You can influence the choice of the method by providing the modelFunc argument. In this case, the
-function uses exclusively simulation methods (monte_carlo, monte_carlo_karlin).  \cr 
-By setting the method_limit you can further decide to which extent computation-intensive methods (daudin, exact_mcc)
+function uses exclusively simulation methods (monteCarlo, karlinMonteCarlo).  \cr 
+By setting the method_limit you can further decide to which extent computation-intensive methods (daudin, exact_mc)
 should be used to calculate the p-value.
 Remark that the warnings of the localScoreC() function have be deleted when called by automatic_analysis() function
 }

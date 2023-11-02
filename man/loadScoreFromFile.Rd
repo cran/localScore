@@ -12,7 +12,7 @@ loadScoreFromFile(filepath, ...)
 \item{...}{optional: use arguments from read.csv}
 }
 \value{
-A List Object - Names correspond to the first column, usually Letters. If probabilities are provided, 
+A List Object - Names correspond to the first column, usually Letters. Associated numerical scores are in the second column. If probabilities are provided, 
 they will be loaded too and presumed to be in the third column
 }
 \description{

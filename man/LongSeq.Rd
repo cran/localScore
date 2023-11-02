@@ -3,36 +3,14 @@
 \docType{data}
 \name{LongSeq}
 \alias{LongSeq}
-\title{Long protein sequence}
+\title{Deprecated. Use 'Seq1093' instead.}
 \format{
-A character string with 1093 characters corresponding to Q60519.fasta in UniProt Data base.
-}
-\source{
-\url{https://www.uniprot.org/}
+Deprecated. Use 'Seq1093' instead.
 }
 \usage{
 LongSeq
 }
 \description{
-A long protein sequence.
-}
-\examples{
-data(LongSeq)
-LongSeq
-nchar(LongSeq)
-data(dico)
-LongSeqScore=CharSequence2ScoreSequence(LongSeq,dico)
-LongSeqScore[1:50]
-localScoreC(LongSeqScore)$localScore
-LS=localScoreC(LongSeqScore)$localScore[1]
-prob1 = scoreSequences2probabilityVector(list(LongSeqScore))
-daudin(localScore = LS, sequence_length = nchar(LongSeq),
-               score_probabilities = prob1,
-               sequence_min = min(LongSeqScore),
-               sequence_max = max(LongSeqScore))
-karlin(localScore = LS, sequence_length = nchar(LongSeq),
-score_probabilities = prob1,
-sequence_min = min(LongSeqScore),
-sequence_max = max(LongSeqScore))
+Deprecated. Use 'Seq1093' instead.
 }
 \keyword{datasets}

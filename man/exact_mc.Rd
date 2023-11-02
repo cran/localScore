@@ -4,27 +4,38 @@
 \alias{exact_mc}
 \title{Exact method for p-value [Markov chains]}
 \usage{
-exact_mc(m, localScore, sequence_length, sequence_min, sequence_max)
+exact_mc(localScore, m, sequence_length, score_values = NULL, prob0 = NULL)
 }
 \arguments{
-\item{m}{Transition matrix [matrix object]}
+\item{localScore}{Integer local score for which the p-value should be calculated}
 
-\item{localScore}{score for which the p-value should be calculated}
+\item{m}{Transition matrix [matrix object]. Optionnaly, rownames can be corresponding score values. m should be a transition matrix of an ergodic Markov chain.}
 
-\item{sequence_length}{length of the sequence}
+\item{sequence_length}{Length of the sequence}
 
-\item{sequence_min}{minimum score}
+\item{score_values}{A integer vector of sequence score values (optional). If not set, the rownames of m are used if they are numeric and set.}
 
-\item{sequence_max}{maximum score}
+\item{prob0}{Vector of probability distribution of the first score of the sequence (optional). If not set, the stationnary distribution of m is used.}
 }
 \value{
 A double representing the probability of a localScore as high as the one given as argument
 }
 \description{
-Calculates the exact p-value for short numerical Markov chains. Time computation can be too large for a sequence length of several thousands, specially for a data set.
+Calculates the exact p-value for short numerical Markov chains. Memory usage and time computation can be too large for a high local score value and high score range (see details).
+}
+\details{
+This method computation needs to allocate a square matrix of size localScore^(range(score_values)). This matrix is then exponentiated to sequence_length.
 }
 \examples{
-matrix = t(matrix(c(0.2, 0.3, 0.5, 0.3, 0.4, 0.3, 0.2, 0.4, 0.4), nrow = 3))
-exact_mc(localScore = 12, m = matrix, sequence_length = 100, sequence_min = -1, sequence_max = 1)
-exact_mc(localScore = 150, m = matrix, sequence_length = 1000, sequence_min = -1, sequence_max = 1)
+mTransition <- t(matrix(c(0.2, 0.3, 0.5, 0.3, 0.4, 0.3, 0.2, 0.4, 0.4), nrow = 3))
+scoreValues <- -1:1
+initialProb <- stationary_distribution(mTransition)
+exact_mc(localScore = 12, m = mTransition, sequence_length = 100, 
+        score_values = scoreValues, prob0 = initialProb)
+exact_mc(localScore = 150, m = mTransition, sequence_length = 1000, 
+         score_values = scoreValues, prob0 = initialProb)
+rownames(mTransition) <- scoreValues
+exact_mc(localScore = 12, m = mTransition, sequence_length = 100, prob0 = initialProb)
+# Minimal specification
+exact_mc(localScore = 12, m = mTransition, sequence_length = 100)
 }

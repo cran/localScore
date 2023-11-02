@@ -31,7 +31,11 @@ Calculates an approximated p-value for a given local score value and a medium to
 }
 \details{
 This methods is actually an improved method of Karlin and produces more precise results. It should be privileged whenever possible. \cr
-As with karlin, the method works the better the longer the sequence.
+As with karlin, the method works the better the longer the sequence. Important note : the calculus of the parameter of the distribution uses
+the resolution of a polynome which is a function of the score distribution, of order max(score)-min(score). There exists only empirical methods to solve a polynome of order greater that 5
+with no warranty of reliable solution.
+The found roots are checked internally to the function and an error message is throw in case of inconsistency. In such case, you could try to change your score scheme (in case of discretization)
+or use the function \code{\link{karlinMonteCarlo}} .
 }
 \examples{
 mcc(40, 100, c(0.08, 0.32, 0.08, 0.00, 0.08, 0.00, 0.00, 0.08, 0.02, 0.32, 0.02), -6, 4)

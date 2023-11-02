@@ -5,28 +5,27 @@
 #' @format A character string with 31 characters "MLTITSYFGFLLAALTITSVLFIGLNKIRLI"
 #' @source \url{https://www.uniprot.org/}
 #' @examples
-#' data(ShortSeq)
-#' ShortSeq
-#' nchar(ShortSeq)
-#' data(dico) 
-#' SeqScore=CharSequence2ScoreSequence(ShortSeq,dico)
+#' data(Seq31)
+#' Seq31
+#' nchar(Seq31)
+#' data(HydroScore) 
+#' SeqScore=CharSequence2ScoreSequence(Seq31,HydroScore)
 #' SeqScore
 #' localScoreC(SeqScore)$localScore
 #' LS=localScoreC(SeqScore)$localScore[1]
 #' prob1 = scoreSequences2probabilityVector(list(SeqScore))
-#' daudin(localScore = LS, sequence_length = nchar(ShortSeq),
+#' daudin(localScore = LS, sequence_length = nchar(Seq31),
 #'                score_probabilities = prob1,
 #'                sequence_min = min(SeqScore),
 #'                sequence_max = max(SeqScore))
 #' score=-5:5
 #' prob2=c(0.15,0.15,0.1,0.1,0.0,0.05,0.15,0.05,0.2,0.0,0.05)
 #' sum(prob2*score)
-#' karlin(localScore = LS, sequence_length = nchar(ShortSeq),
+#' karlin(localScore = LS, sequence_length = nchar(Seq31),
 #' score_probabilities = prob2,
 #' sequence_min = min(SeqScore),
 #' sequence_max = max(SeqScore))
-
-"ShortSeq"
+"Seq31"
 #' 
 #' Protein sequence
 #'
@@ -35,25 +34,25 @@
 #' @format A character string with 219 characters corresponding to P49755.fasta query in UniProt Data base.
 #' @source \url{https://www.uniprot.org/}
 #' @examples
-#' data(MidSeq)
-#' MidSeq
-#' nchar(MidSeq)
-#' data(dico)
-#' MidSeqScore=CharSequence2ScoreSequence(MidSeq,dico)
-#' MidSeqScore[1:30]
-#' localScoreC(MidSeqScore)$localScore
-#' prob1 = scoreSequences2probabilityVector(list(MidSeqScore))
-#' daudin(localScore = 52, sequence_length = nchar(MidSeq),
+#' data(Seq219)
+#' Seq219
+#' nchar(Seq219)
+#' data(HydroScore)
+#' seqScore=CharSequence2ScoreSequence(Seq219,HydroScore)
+#' seqScore[1:30]
+#' localScoreC(seqScore)$localScore
+#' prob1 = scoreSequences2probabilityVector(list(seqScore))
+#' daudin(localScore = 52, sequence_length = nchar(Seq219),
 #'                score_probabilities = prob1,
-#'                sequence_min = min(MidSeqScore),
-#'                sequence_max = max(MidSeqScore))
+#'                sequence_min = min(seqScore),
+#'                sequence_max = max(seqScore))
 #' score=-5:5
 #' prob2=c(0.15,0.15,0.1,0.1,0.0,0.05,0.15,0.05,0.2,0.0,0.05)
-#' daudin(localScore = 52, sequence_length = nchar(MidSeq),
+#' daudin(localScore = 52, sequence_length = nchar(Seq219),
 #'        score_probabilities = prob2,
-#'        sequence_min = min(MidSeqScore),
-#'        sequence_max = max(MidSeqScore))
-"MidSeq"
+#'        sequence_min = min(seqScore),
+#'        sequence_max = max(seqScore))
+"Seq219"
 #' 
 #' Long protein sequence
 #'
@@ -62,40 +61,40 @@
 #' @format A character string with 1093 characters corresponding to Q60519.fasta in UniProt Data base.
 #' @source \url{https://www.uniprot.org/}
 #' @examples
-#' data(LongSeq)
-#' LongSeq
-#' nchar(LongSeq)
-#' data(dico)
-#' LongSeqScore=CharSequence2ScoreSequence(LongSeq,dico)
-#' LongSeqScore[1:50]
-#' localScoreC(LongSeqScore)$localScore
-#' LS=localScoreC(LongSeqScore)$localScore[1]
-#' prob1 = scoreSequences2probabilityVector(list(LongSeqScore))
-#' daudin(localScore = LS, sequence_length = nchar(LongSeq),
+#' data(Seq1093)
+#' Seq1093
+#' nchar(Seq1093)
+#' data(HydroScore)
+#' seqScore=CharSequence2ScoreSequence(Seq1093,HydroScore)
+#' seqScore[1:50]
+#' localScoreC(seqScore)$localScore
+#' LS=localScoreC(seqScore)$localScore[1]
+#' prob1 = scoreSequences2probabilityVector(list(seqScore))
+#' daudin(localScore = LS, sequence_length = nchar(Seq1093),
 #'                score_probabilities = prob1,
-#'                sequence_min = min(LongSeqScore),
-#'                sequence_max = max(LongSeqScore))
-#' karlin(localScore = LS, sequence_length = nchar(LongSeq),
+#'                sequence_min = min(seqScore),
+#'                sequence_max = max(seqScore))
+#' karlin(localScore = LS, sequence_length = nchar(Seq1093),
 #' score_probabilities = prob1,
-#' sequence_min = min(LongSeqScore),
-#' sequence_max = max(LongSeqScore))
-"LongSeq"
+#' sequence_min = min(seqScore),
+#' sequence_max = max(seqScore))
+"Seq1093"
 #' 
 #' Dictionnaire
 #'
-#' Provides the score related to each base of the sequences.
+#' Provides integer scores related to an hydrophobicity level of each amino acid. This score function is inspired by the Kyte and Doolittle (1982) scale.
 #'
 #' @format A score function for the 20 amino acid
 #' @source Kyte & Doolittle (1982) J. Mol. Biol. 157, 105-132
 #' @examples
-#' data(dico)
-#' dico
-#' data(MidSeq)
-#' MidSeq
-#' MidSeqScore=CharSequence2ScoreSequence(MidSeq,dico)
-#' MidSeqScore[1:30]
-#' localScoreC(MidSeqScore)$localScore
-"dico"
+#' data(HydroScore)
+#' HydroScore
+#' data(Seq219)
+#' Seq219
+#' seqScore=CharSequence2ScoreSequence(Seq219,HydroScore)
+#' seqScore[1:30]
+#' localScoreC(seqScore)$localScore
+"HydroScore"
 #'
 #' Several sequences
 #'
@@ -104,13 +103,13 @@
 #' @format A list of 285 character strings with their entry codes as names
 #' @source Structural Classification Of Proteins database (SCOP). More precisely this data contain the 285 protein sequences of the data called "CF_scop2dom_20140205aa" with length from 31 to 404.
 #' @examples
-#' data(MySeqList)
-#' head(MySeqList)
-#' MySeqList[1]
-#' nchar(MySeqList[1])
-#' summary(sapply(MySeqList, nchar))
-#' data(dico)
-#' MySeqScoreList=lapply(MySeqList, FUN=CharSequence2ScoreSequence, dico)
+#' data(SeqListSCOPe)
+#' head(SeqListSCOPe)
+#' SeqListSCOPe[1]
+#' nchar(SeqListSCOPe[1])
+#' summary(sapply(SeqListSCOPe, nchar))
+#' data(HydroScore)
+#' MySeqScoreList=lapply(SeqListSCOPe, FUN=CharSequence2ScoreSequence, HydroScore)
 #' head(MySeqScoreList)
 #' AA=automatic_analysis(sequences=MySeqScoreList, model='iid')
 #' AA[[1]]
@@ -124,4 +123,77 @@
 #' # all the 606 sequences of the data base 
 #' # Score distribution learnt on the data set
 #' scoreSequences2probabilityVector(MySeqScoreList)
+"SeqListSCOPe"
+#'
+#' Congenital oesophageal atresia data
+#'
+#' The data consists of individual dates of birth over n=35 cases of the birth defects oesophageal and tracheo-oesophagean fistula
+#' observed in a hospital in Birmingham, U.K., over 2191 days from 1950 through 1955, with Day one set as 1 January 1950
+#'
+#' @format A matrix of 2191 lines and 2 columns. Each line is a day on the first column, and associated to a case (0/1) on the second column.
+#' @source Dolk H. Secular pattern of congenital oesophageal atresia--George Knox, 1959. J Epidemiol Community Health. 1997;51(2):114-115. <doi:10.1136/jech.51.2.114>
+#' @examples
+#' data(Aeso)
+#' head(Aeso)
+#' p <- sum(Aeso[,2]) / dim(Aeso)[1]
+#' print(p)
+"Aeso"
+#'
+#' Stevens-Johnson syndrome data
+#'
+#' The Stevens-Johnson syndrome is an acute and serious dermatological disease due to a drug allergy. 
+#' The syndrome appearance is life-threatening emergency. They are very rare, around 2 cases per million people per year. 
+#'
+#' @format A data.frame of 824 lines, each describing a syndrome appearance described by 15 covariates:
+#' Case ID,
+#' Initial FDA Received Date,
+#' days since last fda,
+#' Event Date,
+#' Latest FDA Received Date,
+#' Suspect Product Names,
+#' Suspect Product Active Ingredients,
+#' Reason for Use,
+#' Reactions,
+#' Serious,
+#' Outcomes,
+#' Sex,
+#' Patient Age,
+#' Sender,
+#' Concomitant Product Names
+#' The third column correspond to the number of days between two adverse events.
+#'
+#' @source FDA open data.
+#' @examples
+#' data(SJSyndrome.data)
+#' summary(SJSyndrome.data)
+"SJSyndrome.data"
+#'
+#' Deprecated. Use 'Aeso' instead.
+#'
+#'@format Deprecated. Use 'Aeso' instead.
+"aeso.data"
+#'
+#' Deprecated. Use 'Seq31' instead.
+#'
+#'@format Deprecated. Use 'Seq31' instead.
+"ShortSeq"
+#'
+#' Deprecated. Use 'Seq219' instead.
+#'
+#'@format Deprecated. Use 'Seq219' instead.
+"MidSeq"
+#'
+#' Deprecated. Use 'Seq1093' instead.
+#'
+#'@format Deprecated. Use 'Seq1093' instead.
+"LongSeq"
+#'
+#' Deprecated. Use 'HydroScore' instead.
+#'
+#'@format Deprecated. Use 'HydroScore' instead.
+"dico"
+#'
+#' Deprecated. Use 'SeqListSCOPe' instead.
+#'
+#'@format Deprecated. Use 'SeqListSCOPe' instead.
 "MySeqList"

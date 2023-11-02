@@ -20,12 +20,12 @@ test_that("Results checks", {
   expect_equal(localScoreC(c(1,2,3,4,5), supressWarnings=TRUE), built_expected_results(localscore = c(15,1,5), 
                                                                                        suboptimalSeg =  matrix(c(15,1,5), ncol=3, byrow=TRUE),
                                                                                        RecordTime = 1))
-  # Test local score in the middle and sequence beginning with a moutain
+  # Test local score in the middle and sequence beginning with a mountain
   expect_equal(localScoreC(c(1,-2,1,3,-5), supressWarnings=TRUE), built_expected_results(localscore = c(4,3,4), 
                                                                                          suboptimalSeg =  matrix(c(1,1,1,
                                                                                                                    4,3,4), ncol=3, byrow=TRUE),
                                                                                          RecordTime = c(1,3)))
-  # Test local score in the middle and sequence ending with a moutain
+  # Test local score in the middle and sequence ending with a mountain
   expect_equal(localScoreC(c(-2,1,1,-5,1), supressWarnings=TRUE), built_expected_results(localscore = c(2,2,3), 
                                                                                          suboptimalSeg =  matrix(c(2,2,3,
                                                                                                                    1,5,5), ncol=3, byrow=TRUE),

@@ -3,39 +3,14 @@
 \docType{data}
 \name{ShortSeq}
 \alias{ShortSeq}
-\title{Short protein sequence}
+\title{Deprecated. Use 'Seq31' instead.}
 \format{
-A character string with 31 characters "MLTITSYFGFLLAALTITSVLFIGLNKIRLI"
-}
-\source{
-\url{https://www.uniprot.org/}
+Deprecated. Use 'Seq31' instead.
 }
 \usage{
 ShortSeq
 }
 \description{
-A short protein sequence of 31 amino acids corresponding to Q09FU3.fasta query in UniProt Data base.
-}
-\examples{
-data(ShortSeq)
-ShortSeq
-nchar(ShortSeq)
-data(dico) 
-SeqScore=CharSequence2ScoreSequence(ShortSeq,dico)
-SeqScore
-localScoreC(SeqScore)$localScore
-LS=localScoreC(SeqScore)$localScore[1]
-prob1 = scoreSequences2probabilityVector(list(SeqScore))
-daudin(localScore = LS, sequence_length = nchar(ShortSeq),
-               score_probabilities = prob1,
-               sequence_min = min(SeqScore),
-               sequence_max = max(SeqScore))
-score=-5:5
-prob2=c(0.15,0.15,0.1,0.1,0.0,0.05,0.15,0.05,0.2,0.0,0.05)
-sum(prob2*score)
-karlin(localScore = LS, sequence_length = nchar(ShortSeq),
-score_probabilities = prob2,
-sequence_min = min(SeqScore),
-sequence_max = max(SeqScore))
+Deprecated. Use 'Seq31' instead.
 }
 \keyword{datasets}

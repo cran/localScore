@@ -30,7 +30,11 @@ A double representing the probability of a localScore as high as the one given a
 Calculates an approximated p-value of a given local score value and a long sequence length in the identically and independantly distributed model for the sequence. See also mcc() function for another approximated method in the i.i.d. model
 }
 \details{
-This method works the better the longer the sequence is.
+This method works the better the longer the sequence is. Important note : the calculus of the parameter of the distribution uses
+the resolution of a polynome which is a function of the score distribution, of order max(score)-min(score). There exists only empirical methods to solve a polynome of order greater that 5
+with no warranty of reliable solution.
+The found roots are checked internally to the function and an error message is throw in case of inconsistent. In such case, you could try to change your score scheme (in case of discretization)
+or use the function \code{\link{karlinMonteCarlo}} .
 }
 \examples{
 karlin(150, 10000, c(0.08, 0.32, 0.08, 0.00, 0.08, 0.00, 0.00, 0.08, 0.02, 0.32, 0.02), -5, 5)

@@ -3,26 +3,14 @@
 \docType{data}
 \name{dico}
 \alias{dico}
-\title{Dictionnaire}
+\title{Deprecated. Use 'HydroScore' instead.}
 \format{
-A score function for the 20 amino acid
-}
-\source{
-Kyte & Doolittle (1982) J. Mol. Biol. 157, 105-132
+Deprecated. Use 'HydroScore' instead.
 }
 \usage{
 dico
 }
 \description{
-Provides the score related to each base of the sequences.
-}
-\examples{
-data(dico)
-dico
-data(MidSeq)
-MidSeq
-MidSeqScore=CharSequence2ScoreSequence(MidSeq,dico)
-MidSeqScore[1:30]
-localScoreC(MidSeqScore)$localScore
+Deprecated. Use 'HydroScore' instead.
 }
 \keyword{datasets}

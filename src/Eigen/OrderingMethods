@@ -10,7 +10,7 @@
 
 #include "SparseCore"
 
-//DAV #include "src/Core/util/DisableStupidWarnings.h"
+#include "src/Core/util/DisableStupidWarnings.h"
 
 /** 
   * \defgroup OrderingMethods_Module OrderingMethods module
@@ -63,10 +63,7 @@
   * \endcode
   */
 
-#ifndef EIGEN_MPL2_ONLY
 #include "src/OrderingMethods/Amd.h"
-#endif
-
 #include "src/OrderingMethods/Ordering.h"
 #include "src/Core/util/ReenableStupidWarnings.h"
 

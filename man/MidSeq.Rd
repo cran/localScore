@@ -3,37 +3,14 @@
 \docType{data}
 \name{MidSeq}
 \alias{MidSeq}
-\title{Protein sequence}
+\title{Deprecated. Use 'Seq219' instead.}
 \format{
-A character string with 219 characters corresponding to P49755.fasta query in UniProt Data base.
-}
-\source{
-\url{https://www.uniprot.org/}
+Deprecated. Use 'Seq219' instead.
 }
 \usage{
 MidSeq
 }
 \description{
-A protein sequence.
-}
-\examples{
-data(MidSeq)
-MidSeq
-nchar(MidSeq)
-data(dico)
-MidSeqScore=CharSequence2ScoreSequence(MidSeq,dico)
-MidSeqScore[1:30]
-localScoreC(MidSeqScore)$localScore
-prob1 = scoreSequences2probabilityVector(list(MidSeqScore))
-daudin(localScore = 52, sequence_length = nchar(MidSeq),
-               score_probabilities = prob1,
-               sequence_min = min(MidSeqScore),
-               sequence_max = max(MidSeqScore))
-score=-5:5
-prob2=c(0.15,0.15,0.1,0.1,0.0,0.05,0.15,0.05,0.2,0.0,0.05)
-daudin(localScore = 52, sequence_length = nchar(MidSeq),
-       score_probabilities = prob2,
-       sequence_min = min(MidSeqScore),
-       sequence_max = max(MidSeqScore))
+Deprecated. Use 'Seq219' instead.
 }
 \keyword{datasets}
