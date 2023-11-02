@@ -1,4 +1,4 @@
-1357be42cfbe4853f670cee4dae529c5 *DESCRIPTION
+1ea201bf249c87bd43c4a85319c85c0f *DESCRIPTION
 cb957823d5b498e0581747f72661b40e *LICENSE
 46bb8f43198a411e11975b78d9ed704e *NAMESPACE
 acb49431df7f7b9f41892c7762c56027 *R/RcppExports.R
@@ -20,7 +20,7 @@ dcc5d211c6174bef728a1198e1bb9302 *data/ShortSeq.rda
 84d9234eb3ba79cd2fec85a331da2514 *data/dico.rda
 197709e86fcf5c479b0331b292386869 *inst/doc/localScorePackageDocumentation.R
 b46876cdbe6a1f6f299115f0cd45c1a3 *inst/doc/localScorePackageDocumentation.Rmd
-13c57e32cdaec3b87c328717142b7a9a *inst/doc/localScorePackageDocumentation.html
+e239cd12119765df2506aa788176bb39 *inst/doc/localScorePackageDocumentation.html
 bacea292dbed5af8d063802614da3002 *man/Aeso.Rd
 6df30a6be8d33ffa05fdd9edee02a8e8 *man/CharSequence2ScoreSequence.Rd
 f1d17201ca1cf27d7167fe28e28113c5 *man/CharSequences2ScoreSequences.Rd
@@ -595,13 +595,13 @@ bc75ab5a8c3ca729f8dcb08c309b6f47 *src/Eigen/unsupported/src/Splines/SplineFwd.h
 d5501c3e25193c4ba5fe5de973c997d2 *src/RcppExports.cpp
 b442e1baa8e49da11d7d405555166c26 *src/function_wrapper.cpp
 5a570df12e478a5b795b2cc100c4ff7d *src/localScoreC.cpp
-97e74c88420c49fd47afe6faf3187f5c *src/pValueMethods.cpp
+3cf2ac7cc76f9b770670cc0adf8f3ce7 *src/pValueMethods.cpp
 dc9cb097a1ee82ae95f378757f434203 *src/pValueMethods.h
 d7468fa903302f0291d25624e364ee04 *tests/testthat.R
 1a30ab029ce077b86aecfd071b92c177 *tests/testthat/test-daudin.R
 ae0ddb46977be52a02043943ac19a578 *tests/testthat/test-exact_mc.R
-fdc404f8941ef58b882e211dc0a4bf08 *tests/testthat/test-karlin.R
+ec35e7ef26d927c0cfa7412a352e0823 *tests/testthat/test-karlin.R
 9758f0617458d5624b5f283578495299 *tests/testthat/test-localScoreC.R
 895344a177f8a5e9b620f6631b82ceb5 *tests/testthat/test-markov_generic.R
-895d7e50ead6bb9befe66df59b735aec *tests/testthat/test-mcc.R
+a7ddf711b82902e5ae82a2489ebce377 *tests/testthat/test-mcc.R
 b46876cdbe6a1f6f299115f0cd45c1a3 *vignettes/localScorePackageDocumentation.Rmd

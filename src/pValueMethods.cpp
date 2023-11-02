@@ -90,7 +90,7 @@ vector<complex<double>> eq_bairstow(vector<double> polynom, double eps = 1e-15)
     vector<complex<double>> roots;
     double * b = new double[n+1];                               //replaced
     double * c = new double[n+1];
-    int i,j,k;
+    int i,j; //,k;
     double p,q,d,dp,dq,q0,p0;
     bool restart ;
     std::random_device rd;  //Will be used to obtain a seed for the random number engine
@@ -99,7 +99,7 @@ vector<complex<double>> eq_bairstow(vector<double> polynom, double eps = 1e-15)
     
     p0 = 1.0;
     q0 = -1.0;
-    k=1;
+    //k=1;
     p=p0;
     q=q0;
     b[0]=polynom[0];
@@ -155,7 +155,7 @@ vector<complex<double>> eq_bairstow(vector<double> polynom, double eps = 1e-15)
                 }
                 exit(2) ;
             } */
-            k += 2;
+            //k += 2;
             n -= 2;
             for (i = 1; i <= n; i++)
                 polynom[i] = b[i];
@@ -618,7 +618,7 @@ double calcul_mcc(int localScore, vector<double> distribution, int u, int v, lon
   double mu = ESmoins/E;
   //11 Calcul lambda
   double R = roots_separated.mod_smaller_one[0].real();
-  double lambda = -log(R);
+  //double lambda = -log(R);
   //12 Substitution x
   //double x = localScore - floor((log(sequence_length)/lambda));  //inutile car directement mis dans la formule (qui se simplifie)
   //13 Calcul Somme 1 > Ref p. 12 Rapport Anne Benedicte Urbano 2002
@@ -762,7 +762,7 @@ double mh_markov(int localscore, MatrixXd transitionMatrix, VectorXi scoreValues
   
   int i, l, c; //used for iterating
   
-  int s_min = scoreValues.minCoeff(); 
+  // int s_min = scoreValues.minCoeff(); 
   int nbScores = scoreValues.size();
 
   // Créer la table de hashage (score local, score) -> n° ligne de la grande matrice P
