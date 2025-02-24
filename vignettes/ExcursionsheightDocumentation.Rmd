@@ -1,0 +1,302 @@
+---
+title: "Exact distribution of excursions height"
+author: "Sébastien Déjean - Charly Marti - Sabine Mercier - Sebastian Simon - David Robelin"
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    df_print: paged
+    toc: yes
+vignette: >
+  %\VignetteIndexEntry{Exact distribution of excursions height} 
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown} 
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  warning = FALSE,
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, echo=FALSE}
+library(localScore)
+```
+
+# Introduction
+
+The goal of this part of the package is to calculate the theoretical probability that the $i$-th excursion reach the threshold score $a$, for a Markov chain with a known transition matrix and a given score function. 
+The main function for this objective is `proba_theoretical_ith_excursion_markov()`.
+
+This section of the localScore package is the direct implementation of the pre publication: "Exact distribution of excursion heights of the Lindley
+process in a Markovian model" written by Carlos Cortés Rojas, Simona Grusea and Sabine Mercier.
+
+## Computation method 
+The main goal of this function is to calculate the probability that the first excursion  of the Lindley sequence associated to the studied sequence is greater or equal to $a$, conditionally to $\alpha$ a potential beginning of this sequence. 
+It also computes the transition probability matrix of the beginnings of excursions: `matrix_M`. 
+
+The product of this matrix, elevated to the power $i-1$, with the first vector of the probabilities conditionally to $\alpha$, gives the probabilities conditionally to $\alpha$ for the $i$-th excursion.
+To return the global probability, the function multiplies the conditional vector with the distribution of the first letter of the sequence.
+
+## Definition of a mathematical excursion 
+
+The number of an excursion is given by the mathematical definition of Karlin  and Altschul (1990). Its corresponds to the number of record times of the Lindley sequence associated to the score sequence $(X_k)_{1\leq k\leq n}$ and recursively defined as follows:
+$$T_0:=0\qquad \mbox{and }\qquad T_{(k+1)}:=\inf\{i\geq T_k+1, \sum_{j=T_k+1}^i X_j<0\}\ .$$
+Please  note that the sum $\sum_{j=T_k+1}^i X_j$ must be non positive. If it is equal to zero, it will mathematically be still the same Lindley excursion.
+$$(A_k)_k\quad \mbox{with}\quad T_{(i-1)}+1\leq k <T_i$$ 
+is called the $i$-th positive excursion
+of the sequence in the term of Karlin and Altschul. This mathematical definition includes the index with a Linldey score equal to 0, whereas visually we "see" the excursion beginning at the following index.
+
+The mathematical number of an excursion must be distinguished from the one of the corresponding visible excursion because of the possible appearance of flat excursions. See below for an example.
+
+```{r}
+seq <- c(-1,2,-3,-4,-1,3,-1,-2,3,-4,2)
+lindley(seq)
+plot(1:length(seq), lindley(seq), type = 'l')
+localScoreC(seq)
+```
+We can "see" three positive excursions, with top at index $\{2; 6; 9\}$; plus one last not achieved at index $\{11\}$. Their exists also five flats excursions: at index $\{1 ; 3 ; 4 ; 5 ; 10\}$. Note also that the Lindley excursion 6-10 reach 0 at index 8 without going in non positive values, so it is still the same excursion. 
+
+In summary, the excursions list is: $\{1 ; 2-3 ; 4 ; 5 ; 6-10 ; 11\}$.
+The following function gives the record time of the mathematical excursion that must be used to compute the statistical significance. Note that we choose to omit the conventional first record time which is always 0.
+```{r}
+recordTimes(seq)
+```
+
+So the sub optimal excursion values given by `$suboptimalSegmentScores` 2 3 3 2 are achieved by the excursion number 2, 5 (twice) and 6. At this point, we wish to lighten a difference between the notion of "excursion" defined mathematically by Karlin and Dembo (1992), and the results given in `$suboptimalSegmentScores`. The segment [6-10] is an excursion in mathematical sense as the cumulative process starting at position 7 never hit a negative value before the 10th position. Nevetheless this process hit a null value indicating that this single excursion contain at least two positive score segments (here : at position 6 and 9). We chose to indicate in `$suboptimalSegmentScores` all positive consecutive sub-sequences, as it can be more meaningful when applied on real data.
+
+To calculate the $p$-value of a given excursion, we have to know which number of excursion it is in sequential order.
+Notice that it will not bring any problem of making a mistake in the number of the excursion for a number exceeding 10, and a small difference for a lower number, as the sequence composed by the begin-component of each excursion, which is also a Markov chain, can reach the stationary distribution. For the first excursions, it is far more easy to recover the record time of the corresponding mathematical excursion in the list.
+
+# Toy examples
+As the function calculates a theoretical probability, we don't need a sequence of scores but the transition matrix of the markov chain: $\Lambda$. It also requires a score function with: integer scores, a negative expectation and at least one possible positive score.
+We also need $\theta$, an alphabet (can contains numbers) with unique values ; and $i$: the rank of the excursion on which we calculate the probabilities.
+The optional parameters are `epsilon` and `prob0`. `epsilon` is a threshold for the computation of matrix $M$ and `prob0` is the probability distribution of the first letter of the sequence.
+Obviously, `theta`, the score function and `prob0` should have the same length $p$, and the dimension of `lambda` should be $(p,p)$.
+
+In this example, we want to know the probability that the second excursion reach a score greater or equal than 5 with the matrix $\Lambda$ and a score function of $(-1,1)$, given that the first score of the sequence have 50 percent chances to be -1.
+```{r}
+proba_theoretical_ith_excursion_markov(a = 5,
+                                       theta = c("A", "B"),
+                                       lambda = matrix(c(0.5, 0.5, 0.8, 0.2),
+                                                       ncol = 2, byrow = TRUE),
+                                       score_function = c(-1,1),
+                                       i = 2,
+                                       epsilon = 1e-16,
+                                       prob0 = c(0.5, 0.5))
+```
+In this following example, we see that this is not a problem to have missing score values in the score function, and that theta can contain numbers.
+Initial value of `epsilon` is 1e-16, and if we don't precise the value of `prob0`, the function compute the stationary distribution of $\Lambda$, and use it for the distribution of the first letter of the sequence.
+```{r}
+proba_theoretical_ith_excursion_markov(a = 5,
+                                       theta = c("K", 12, 1.54),
+                                       lambda = matrix(c(0.9, 0, 0.1, 0.9, 0.1, 0, 0, 0.8, 0.2),
+                                                       ncol = 3, byrow = TRUE),
+                                       score_function = c(-3,-1,2),
+                                       i = 4)
+```
+In the following example, the function takes longer as we increased the number of scores (complexity of $O(length(\theta)^3))$, but here with 20 scores, the computational time is acceptable.
+```{r}
+transition_matrix <- matrix(runif(400, min = 0, max = 1), nrow = 20)
+transition_matrix <- t(apply(transition_matrix, 1, function(x) x/sum(x)))
+theta <- letters[1:20]
+score_f <- c(-3,-1,2,-3,-1,2,-3,-1,2,-1,
+              -3,-1,2,-3,-1,2,-3,-1,2,-1)
+sum(stationary_distribution(transition_matrix)*score_f) #score expectation (stationary)
+system.time(pv1 <- proba_theoretical_ith_excursion_markov(a=5, theta, transition_matrix, score_f, i = 4))
+pv1$proba_q_i_geq_a
+```
+
+# A study case
+
+Let us consider the protein `Seq1093` of 1093 amino acid proposed in the package `localScore` which corresponds to the Q60519.fasta in UniProt Data base. 
+
+## Optimal excursion, the local score 
+
+Using the hydrophobic score scale called `HydroScore`, we compute the local score, corresponding to the height of the highest excursion.
+
+```{r}
+library(localScore)
+data("Seq1093")
+Seq1093
+nchar(Seq1093)
+data(HydroScore)
+LongSeqScore <- CharSequence2ScoreSequence(Seq1093, HydroScore)
+table(LongSeqScore)
+localScoreC(LongSeqScore)
+
+head(sort(localScoreC(LongSeqScore)$suboptimalSegmentScores[,1], decreasing = TRUE))
+plot(1:1093,lindley(LongSeqScore), type = 'l')
+plot(1:400,lindley(LongSeqScore)[1:400], type = 'l')
+```
+
+We get: local score = 65.
+Let us compute its $p$-value in a I.I.D. model.
+
+```{r}
+LS <- localScoreC(LongSeqScore)$localScore["value"]
+prob1 <- scoreSequences2probabilityVector(list(LongSeqScore))
+prob1
+daudin(local_score = LS, sequence_length = length(LongSeqScore),
+       score_probabilities = prob1,
+       sequence_min = min(LongSeqScore),
+       sequence_max = max(LongSeqScore))
+```
+In an independent model the $p$-value equals $7.2\%$, that is non significant using the nominal level $5\%$. 
+
+Let us compute it in a markovian model. We need the transition matrix.
+
+```{r}
+tmpMarkovParameters <- sequences2transmatrix(LongSeqScore)
+lambda <- tmpMarkovParameters$transition_matrix
+apply(lambda, 1, sum) #to check stochasticity
+prob0 <- stationary_distribution(lambda)
+print(prob0)
+score_values <- tmpMarkovParameters$score_value
+print(score_values)
+```
+Notice that the score value 1 is not present in the sequence.
+
+
+```{r}
+exact_mc(LS, lambda, sequence_length = length(LongSeqScore), score_values = score_values)
+``` 
+The $p$-value in a Markovian model, equal to $7.7\%$ is very similar in this case with the one of the independent model.
+
+
+# Sub optimal excursions
+
+Let us consider a study on the first and the last sub optimal excursions.
+
+```{r}
+subOptSegment <- localScoreC(LongSeqScore)$suboptimalSegmentScores
+o <- order(subOptSegment[,1], decreasing = TRUE)
+subOptSegment <- subOptSegment[o,] # reordering segments by decreasing score values
+print(subOptSegment)
+```
+The sub optimal scores are 40, 36 and 33 realized by the "visual" excursions number 1, 15 and 11.
+Such number of excursion, 11 and 15 are large enough to avoid considering the mathematical number. The first excursion is mathematically the first one (see below).
+
+```{r}
+lindley(LongSeqScore)
+recordTimes(LongSeqScore)
+LongSeqScore[1] > 0
+```
+
+Let us consider a study on the first and the last sub optimal excursions in the sequential order of the sequence.
+
+First excursion height equal to 40; last one, the 77th one, height equal to 6. 
+```{r}
+subOptSegment["1",] #First excursion
+subOptSegment[as.character(dim(subOptSegment)[1]),] #Last excursion
+```
+
+Let us compute their $p$-values.
+
+
+```{r}
+theta <- letters[1:length(score_values)] # arbitrary
+score_function <- score_values           # defined earlier 
+a <- 40 
+i <- 1
+system.time(pv2<-proba_theoretical_ith_excursion_markov(a, theta, lambda, 
+                                       score_function,i)$proba_q_i_geq_a)
+pv2
+
+a <- 6 
+i <- 77
+system.time(pv3<-proba_theoretical_ith_excursion_markov(a, theta, lambda, 
+                                       score_function, i)$proba_q_i_geq_a)
+pv3
+```
+
+First excursion : height equal to 40 with $p$-value=$0.45\%$;
+Last excursion, the 77th one, height equal to 6 and $p$-value=$17\%$.
+
+The time computation of the first $p$-value is larger because of the larger value of $a$.
+
+We can consider that from the 20th mountain we reached the stationary distribution for the beginning of excursion. We shall therefore take a lower value for $i$ for the last excursion to evaluate the difference. Let us try $i=20$ instead of 77. 
+
+```{r}
+a <- 6 
+i <- 20
+system.time(pv4 <- proba_theoretical_ith_excursion_markov(a, theta, 
+                                       lambda, 
+                                       score_function,i)$proba_q_i_geq_a)
+pv4
+
+i <-  10
+system.time(pv5 <- proba_theoretical_ith_excursion_markov(a, theta, 
+                                       lambda, 
+                                       score_function,i)$proba_q_i_geq_a)
+pv5
+```
+We obtain the same value as expected even for $i=10$.
+
+## With a reverse lecture of the protein
+
+As the lecture of a protein could be done in both direction, we also consider the reverse sequence.
+
+```{r}
+LongSeqScore.inv <- rev(LongSeqScore)
+localScoreC(LongSeqScore.inv)
+head(sort(localScoreC(LongSeqScore.inv)$suboptimalSegmentScores[,1], decreasing = TRUE))
+plot(1:1093,lindley(LongSeqScore.inv), type = 'l')
+```
+
+That leads to: first excursion equal to 6; last excursion, the 96th one, equal to 38. 
+
+The corresponding $p$-values are:
+
+```{r}
+markov_parameters <- sequences2transmatrix(LongSeqScore.inv)
+lambda.inv <- markov_parameters$transition_matrix
+system.time(pv5<-proba_theoretical_ith_excursion_markov(a = 38, theta, 
+                                       lambda.inv, 
+                                       score_function, i = 96
+                                       )$proba_q_i_geq_a)
+pv5
+proba_theoretical_ith_excursion_markov(a = 6, theta, lambda.inv,
+                                       score_function,i = 1
+                                       )$proba_q_i_geq_a
+```
+Last excursion, the 96th one, equal to 38, with $p$-value equal to $0.53\%$.
+First excursion equal to 6, with $p$-value equal to $17\%$.
+
+The last excursion is still significant. The first one is still non significant.
+
+Remark : Even with a Bonferroni correction to take into account the multiple test (here two studies excursions), the sequence possesses a significant segment. Whereas considering the highest value over all the excursions of the whole sequence, the local score value, the sequence is not significant.
+
+## What about the excursion realising the local score
+
+Let us consider the excursion 30 as an excursion among the others. For the first way to read the protein:
+```{r}
+a <- 65 
+i <- 30
+proba_theoretical_ith_excursion_markov(a, theta, 
+                                       lambda, score_function, 
+                                       i)$proba_q_i_geq_a
+
+```
+
+There is a less than 4 in 10,000 chance of having a first mountain over 65.
+
+Or with the second way to read the protein:
+```{r}
+subOptSegment.inv <- localScoreC(LongSeqScore.inv)$suboptimalSegmentScores
+which.max(subOptSegment.inv[,1])
+print(subOptSegment.inv[16,])
+
+a <- 65 
+i <- 16
+proba_theoretical_ith_excursion_markov(a, theta, lambda.inv, 
+                                       score_function,i)$proba_q_i_geq_a
+
+```
+As expected we obtain a similar $p$-value.
+ 
+Although the highest mountain of height 65 in this sequence of length 1093 does not have a significant value at the $5\%$ threshold, it does not mean that the sequence has not interesting segments. Observing a mountain exceeding 40 is significant for example, and it is the same for values 36 and 33. All these tests remain significant even if a correction of type Bonferroni is taken.
+

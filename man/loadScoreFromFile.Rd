@@ -4,17 +4,22 @@
 \alias{loadScoreFromFile}
 \title{Load score from file}
 \usage{
-loadScoreFromFile(filepath, ...)
+loadScoreFromFile(filepath, header = TRUE, ...)
 }
 \arguments{
-\item{filepath}{optional: location of file on disk. If not provided, a file picker dialog will be opened.}
+\item{filepath}{optional: location of file on disk. If not provided, a file picker dialogue box will be opened.}
+
+\item{header}{does the file contain a header line (defaut to \code{TRUE})}
 
 \item{...}{optional: use arguments from read.csv}
 }
 \value{
-A List Object - Names correspond to the first column, usually Letters. Associated numerical scores are in the second column. If probabilities are provided, 
+A data.frame. Rownames correspond to the first column, usually Letters. Associated numerical scores are in the second column. If probabilities are provided, 
 they will be loaded too and presumed to be in the third column
 }
 \description{
-Reads a csv file with 2-3 columns and returns it as a list object of vectors, with names corresponding to the first column of the file. For details view section "File Formats" in vignette.
+Reads a csv file containing an alphabet, the associated scores, and eventually the associated probabilities.
+}
+\details{
+The file should contains a header and 2 or 3 columns : first column the letters, second column the associated scores, optional third column associated probabilities. Letters should be unique and probabilities should sum to 1.
 }

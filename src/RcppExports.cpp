@@ -11,47 +11,60 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // daudin
-double daudin(int localScore, int sequence_length, NumericVector score_probabilities, int sequence_min, int sequence_max);
-RcppExport SEXP _localScore_daudin(SEXP localScoreSEXP, SEXP sequence_lengthSEXP, SEXP score_probabilitiesSEXP, SEXP sequence_minSEXP, SEXP sequence_maxSEXP) {
+double daudin(int local_score, int sequence_length, NumericVector score_probabilities, int sequence_min, int sequence_max);
+RcppExport SEXP _localScore_daudin(SEXP local_scoreSEXP, SEXP sequence_lengthSEXP, SEXP score_probabilitiesSEXP, SEXP sequence_minSEXP, SEXP sequence_maxSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type localScore(localScoreSEXP);
+    Rcpp::traits::input_parameter< int >::type local_score(local_scoreSEXP);
     Rcpp::traits::input_parameter< int >::type sequence_length(sequence_lengthSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type score_probabilities(score_probabilitiesSEXP);
     Rcpp::traits::input_parameter< int >::type sequence_min(sequence_minSEXP);
     Rcpp::traits::input_parameter< int >::type sequence_max(sequence_maxSEXP);
-    rcpp_result_gen = Rcpp::wrap(daudin(localScore, sequence_length, score_probabilities, sequence_min, sequence_max));
+    rcpp_result_gen = Rcpp::wrap(daudin(local_score, sequence_length, score_probabilities, sequence_min, sequence_max));
     return rcpp_result_gen;
 END_RCPP
 }
 // karlin
-double karlin(int localScore, int sequence_length, NumericVector score_probabilities, int sequence_min, int sequence_max);
-RcppExport SEXP _localScore_karlin(SEXP localScoreSEXP, SEXP sequence_lengthSEXP, SEXP score_probabilitiesSEXP, SEXP sequence_minSEXP, SEXP sequence_maxSEXP) {
+double karlin(int local_score, int sequence_length, NumericVector score_probabilities, int sequence_min, int sequence_max);
+RcppExport SEXP _localScore_karlin(SEXP local_scoreSEXP, SEXP sequence_lengthSEXP, SEXP score_probabilitiesSEXP, SEXP sequence_minSEXP, SEXP sequence_maxSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type localScore(localScoreSEXP);
+    Rcpp::traits::input_parameter< int >::type local_score(local_scoreSEXP);
     Rcpp::traits::input_parameter< int >::type sequence_length(sequence_lengthSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type score_probabilities(score_probabilitiesSEXP);
     Rcpp::traits::input_parameter< int >::type sequence_min(sequence_minSEXP);
     Rcpp::traits::input_parameter< int >::type sequence_max(sequence_maxSEXP);
-    rcpp_result_gen = Rcpp::wrap(karlin(localScore, sequence_length, score_probabilities, sequence_min, sequence_max));
+    rcpp_result_gen = Rcpp::wrap(karlin(local_score, sequence_length, score_probabilities, sequence_min, sequence_max));
+    return rcpp_result_gen;
+END_RCPP
+}
+// karlin_parameters
+NumericVector karlin_parameters(NumericVector score_probabilities, int sequence_min, int sequence_max);
+RcppExport SEXP _localScore_karlin_parameters(SEXP score_probabilitiesSEXP, SEXP sequence_minSEXP, SEXP sequence_maxSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type score_probabilities(score_probabilitiesSEXP);
+    Rcpp::traits::input_parameter< int >::type sequence_min(sequence_minSEXP);
+    Rcpp::traits::input_parameter< int >::type sequence_max(sequence_maxSEXP);
+    rcpp_result_gen = Rcpp::wrap(karlin_parameters(score_probabilities, sequence_min, sequence_max));
     return rcpp_result_gen;
 END_RCPP
 }
 // mcc
-double mcc(int localScore, int sequence_length, NumericVector score_probabilities, int sequence_min, int sequence_max);
-RcppExport SEXP _localScore_mcc(SEXP localScoreSEXP, SEXP sequence_lengthSEXP, SEXP score_probabilitiesSEXP, SEXP sequence_minSEXP, SEXP sequence_maxSEXP) {
+double mcc(int local_score, int sequence_length, NumericVector score_probabilities, int sequence_min, int sequence_max);
+RcppExport SEXP _localScore_mcc(SEXP local_scoreSEXP, SEXP sequence_lengthSEXP, SEXP score_probabilitiesSEXP, SEXP sequence_minSEXP, SEXP sequence_maxSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type localScore(localScoreSEXP);
+    Rcpp::traits::input_parameter< int >::type local_score(local_scoreSEXP);
     Rcpp::traits::input_parameter< int >::type sequence_length(sequence_lengthSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type score_probabilities(score_probabilitiesSEXP);
     Rcpp::traits::input_parameter< int >::type sequence_min(sequence_minSEXP);
     Rcpp::traits::input_parameter< int >::type sequence_max(sequence_maxSEXP);
-    rcpp_result_gen = Rcpp::wrap(mcc(localScore, sequence_length, score_probabilities, sequence_min, sequence_max));
+    rcpp_result_gen = Rcpp::wrap(mcc(local_score, sequence_length, score_probabilities, sequence_min, sequence_max));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -81,41 +94,29 @@ BEGIN_RCPP
 END_RCPP
 }
 // exact_mc
-double exact_mc(int localScore, NumericMatrix m, int sequence_length, Nullable<NumericVector> score_values, Nullable<NumericVector> prob0);
-RcppExport SEXP _localScore_exact_mc(SEXP localScoreSEXP, SEXP mSEXP, SEXP sequence_lengthSEXP, SEXP score_valuesSEXP, SEXP prob0SEXP) {
+double exact_mc(int local_score, NumericMatrix m, int sequence_length, Nullable<NumericVector> score_values, Nullable<NumericVector> prob0);
+RcppExport SEXP _localScore_exact_mc(SEXP local_scoreSEXP, SEXP mSEXP, SEXP sequence_lengthSEXP, SEXP score_valuesSEXP, SEXP prob0SEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type localScore(localScoreSEXP);
+    Rcpp::traits::input_parameter< int >::type local_score(local_scoreSEXP);
     Rcpp::traits::input_parameter< NumericMatrix >::type m(mSEXP);
     Rcpp::traits::input_parameter< int >::type sequence_length(sequence_lengthSEXP);
     Rcpp::traits::input_parameter< Nullable<NumericVector> >::type score_values(score_valuesSEXP);
     Rcpp::traits::input_parameter< Nullable<NumericVector> >::type prob0(prob0SEXP);
-    rcpp_result_gen = Rcpp::wrap(exact_mc(localScore, m, sequence_length, score_values, prob0));
+    rcpp_result_gen = Rcpp::wrap(exact_mc(local_score, m, sequence_length, score_values, prob0));
     return rcpp_result_gen;
 END_RCPP
 }
 // localScoreC
-List localScoreC(std::vector<int> v, bool supressWarnings);
-RcppExport SEXP _localScore_localScoreC(SEXP vSEXP, SEXP supressWarningsSEXP) {
+SEXP localScoreC(SEXP v, bool suppressWarnings);
+RcppExport SEXP _localScore_localScoreC(SEXP vSEXP, SEXP suppressWarningsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< std::vector<int> >::type v(vSEXP);
-    Rcpp::traits::input_parameter< bool >::type supressWarnings(supressWarningsSEXP);
-    rcpp_result_gen = Rcpp::wrap(localScoreC(v, supressWarnings));
-    return rcpp_result_gen;
-END_RCPP
-}
-// localScoreC_double
-List localScoreC_double(std::vector<double> v, bool supressWarnings);
-RcppExport SEXP _localScore_localScoreC_double(SEXP vSEXP, SEXP supressWarningsSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< std::vector<double> >::type v(vSEXP);
-    Rcpp::traits::input_parameter< bool >::type supressWarnings(supressWarningsSEXP);
-    rcpp_result_gen = Rcpp::wrap(localScoreC_double(v, supressWarnings));
+    Rcpp::traits::input_parameter< SEXP >::type v(vSEXP);
+    Rcpp::traits::input_parameter< bool >::type suppressWarnings(suppressWarningsSEXP);
+    rcpp_result_gen = Rcpp::wrap(localScoreC(v, suppressWarnings));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -123,12 +124,12 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_localScore_daudin", (DL_FUNC) &_localScore_daudin, 5},
     {"_localScore_karlin", (DL_FUNC) &_localScore_karlin, 5},
+    {"_localScore_karlin_parameters", (DL_FUNC) &_localScore_karlin_parameters, 3},
     {"_localScore_mcc", (DL_FUNC) &_localScore_mcc, 5},
     {"_localScore_maxPartialSumd", (DL_FUNC) &_localScore_maxPartialSumd, 4},
     {"_localScore_stationary_distribution", (DL_FUNC) &_localScore_stationary_distribution, 1},
     {"_localScore_exact_mc", (DL_FUNC) &_localScore_exact_mc, 5},
     {"_localScore_localScoreC", (DL_FUNC) &_localScore_localScoreC, 2},
-    {"_localScore_localScoreC_double", (DL_FUNC) &_localScore_localScoreC_double, 2},
     {NULL, NULL, 0}
 };
 

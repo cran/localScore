@@ -24,13 +24,22 @@ Creates Markov chains based on a transition matrix. Can be used as parameter for
 \details{
 The transition matrix is considered representing the transition from one score to another such that the score in the first row is the lowest 
 and the last row are the transitions from the highest score to another. The matrix must be stochastic (no rows filled up with only '0' values).
+
+It is possible to have the same score for different states of the markov chain. 
+If no score supplied, the function returns a markov chain with state in 1:ncol(matrix)
 }
 \examples{
-B = t(matrix (c(0.2, 0.8, 0.4, 0.6), nrow = 2))
+B <-  matrix (c(0.2, 0.8, 0.4, 0.6), nrow = 2, byrow = TRUE)
 transmatrix2sequence(B, length = 10)
+transmatrix2sequence(B, length = 10, score = c(-2,1))
+transmatrix2sequence(B, length = 10, score = c("A","B"))
 MyTransMat <-
-   matrix(c(0.3,0.1,0.1,0.1,0.4, 0.2,0.2,0.1,0.2,0.3, 0.3,0.4,0.1,0.1,0.1, 0.3,0.3,0.1,0.0,0.3,
-    0.1,0.1,0.2,0.3,0.3), ncol = 5, byrow=TRUE)
-MySeq.CM=transmatrix2sequence(matrix = MyTransMat,length=90, score =c(-2,-1,0,2,3))
+   matrix(c(0.3,0.1,0.1,0.1,0.4,
+            0.2,0.2,0.1,0.2,0.3,
+            0.3,0.4,0.1,0.1,0.1,
+            0.3,0.3,0.1,0.0,0.3,
+            0.1,0.1,0.2,0.3,0.3),
+            ncol = 5, byrow=TRUE)
+MySeq.CM <- transmatrix2sequence(matrix = MyTransMat,length=90, score =c(-2,-1,0,2,3))
 MySeq.CM
 }

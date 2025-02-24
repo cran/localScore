@@ -3,14 +3,36 @@
 \docType{data}
 \name{aeso.data}
 \alias{aeso.data}
-\title{Deprecated. Use 'Aeso' instead.}
+\alias{SJSyndrome.data}
+\alias{MySeqList}
+\alias{dico}
+\alias{LongSeq}
+\alias{MidSeq}
+\alias{ShortSeq}
+\title{Deprecated}
 \format{
-Deprecated. Use 'Aeso' instead.
+Refers to the "See also" links below to obtain a description of each dataset.
 }
 \usage{
-aeso.data
+data(Aeso) ; data(SJSyndrome) ;
+       data(SeqListSCOPe) ; data(HydroScore) ;
+       data(Seq1093) ; data(Seq219) ; data(Seq31)
 }
 \description{
-Deprecated. Use 'Aeso' instead.
+Some datasets are deprecated and will be removed in next version of the package.
+Please use instead:
+\itemize{
+  \item data(aeso.data) -> data(Aeso)
+  \item data(SJSyndrome.data) -> data(SJSyndrome)
+  \item data(MySeqList) -> data(SeqListSCOPe)
+  \item data(dico) -> data(HydroScore)
+  \item data(LongSeq) -> data(Seq1093)
+  \item data(MidSeq) -> data(Seq219)
+  \item data(ShortSeq) -> data(Seq31)
 }
-\keyword{datasets}
+}
+\seealso{
+\code{\link{Aeso}} \code{\link{SJSyndrome}} \code{\link{SeqListSCOPe}} 
+         \code{\link{HydroScore}} \code{\link{Seq1093}} \code{\link{Seq219}} \code{\link{Seq31}}
+}
+\keyword{internal}

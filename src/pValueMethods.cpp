@@ -11,9 +11,20 @@
 #include "Eigen/Dense"
 #include "Eigen/Core"
 #include "Eigen/unsupported/MatrixFunctions"
+#include "Rcpp.h"
 
 using namespace std;
 using namespace Eigen;
+
+//INPUT:    array probabilities for all x in scores de v to u
+//OUTPUT:   array with polynomial coefficients belonging to the power of x corresponding to its index.
+
+//The underlying formula is:
+//
+// P(x) = sum from i=1 to u(p_i*x^(u-i) + (p_0 -1)*x^u + sum from j = 1 to v (q_j * x^(u+j)
+//
+// ref (3) "An improved Approximation for assessing the satistical significance of molecular sequence features",
+// Applied Probability Trust 18 april 2003 by Mercier S, Cellier D, Charlot D University of Toulouse / Rouen
 
 bool sortByModule_desc(const std::complex<double> &one, const std::complex<double> &two) { return std::norm(one) > std::norm(two); }
 
@@ -24,6 +35,7 @@ bool sortByType(const std::complex<double> &one, const std::complex<double> &two
 
 //INPUT:    array probabilities for all x in scores from v to u
 //OUTPUT:   array with polynomial coefficients belonging to the power of x corresponding to its index.
+
 //The underlying formula is:
 //
 // P(x) = sum from i=1 to u(p_i*x^(u-i) + (p_0 -1)*x^u + sum from j = 1 to v (q_j * x^(u+j)
@@ -206,7 +218,8 @@ bool verif_roots(vector <double> polynome, vector <complex<double>> roots, int u
     for (auto it = polynome.rbegin()+1; it != polynome.rend(); ++it){
       rootsPowI = rootsPowI*root; // puissance i-1 de 'root'
       value_poly += *it * rootsPowI;
-    }
+}
+
     if (norm(value_poly)>eps){
       // root n'est pas une racine du polynome
       // les 3 lignes sont mise en commentaires (ne pas utiliser std::cerr avec R). A remplacer par un code d'erreur.
@@ -214,7 +227,7 @@ bool verif_roots(vector <double> polynome, vector <complex<double>> roots, int u
       // cerr << "value_poly: " << value_poly << "  ";
       // cerr << "norm(value_poly): " << norm(value_poly) << endl;
       return(false);
-    }
+  }
   }
   return(true);
 }
@@ -254,14 +267,16 @@ void orderbytype(vector<complex<double>> &roots){
 vector<double> calcul_TabSmoins_cas_general_complexe(vector<complex<double>> roots_greater_one, int v){
   //-1 trier  racines de facon croissante
   sort(roots_greater_one.begin(), roots_greater_one.end(), sortByModule_asc);
+  
   //0 declare variables
-  MatrixXcd m(v,v);
+  Eigen::MatrixXcd m(v,v);
   vector<double> TabSMoins;
   //1 Create Vandermonde Matrix for all roots modulus greater 1
   for(int s = 0; s<v; s++){
     for(int t = 0; t<v; t++)
-      m(s, t) = pow(roots_greater_one[s], t+1);
+      m(s, t) = pow(roots_greater_one[s], t+1);  // XXX memory leaks if v > roots_greater_one.size()
   }
+  //cout << "matrice de Vandermonde:" << endl << m << endl;
 
   //2 Decomposition of matrix
   Eigen::FullPivLU<Eigen::MatrixXcd> lu(m);
@@ -273,12 +288,16 @@ vector<double> calcul_TabSmoins_cas_general_complexe(vector<complex<double>> roo
   }
   //3 Resolution of system Ax = Id: Create Id, solve
   VectorXcd solutions = lu.solve(id);
+//  cout << "solutions " << endl << solutions << endl;
+
+  
   //4 add real part to vector and return result
   for(int s = 0; s<solutions.rows();s++)
     TabSMoins.push_back(solutions(s).real());
   return TabSMoins;
 }
 
+//calculates distribution of max partial sum
 vector <double> calcul_deltaI_Complexe(RootTypes roots, vector<double> probabilities, int u, int v){
   vector <complex<double>> pkMoins1;
   complex <double> coeffC;
@@ -295,6 +314,7 @@ vector <double> calcul_deltaI_Complexe(RootTypes roots, vector<double> probabili
   // 1  Create Matrix m of size mSize*mSize
   Eigen::MatrixXd m(lSize,cSize);
   // 1.1 second row
+  //s = 0;
   // real roots
   for(t = 0; t < roots.real_roots.size(); t++) {
     coeffR = p_1(probabilities, roots.real_roots[t], u, v);
@@ -341,7 +361,7 @@ vector <double> calcul_deltaI_Complexe(RootTypes roots, vector<double> probabili
     m(u-1, idx) = coeffC.real();
     m(u-1, idx+1) = coeffC.imag();
   }
-  
+
   // Supplementary rows to add constraints for complex root : delta_jR == delta_jI
   unsigned int idxLine;
   for (s = 0; s<roots.complex_roots.size() ; s++){
@@ -353,7 +373,6 @@ vector <double> calcul_deltaI_Complexe(RootTypes roots, vector<double> probabili
     m(idxLine, idx) = 1.0 ;
     m(idxLine, idx+1) = -1.0 ;
   }  
-  
   // 2  Création du vecteur b pour la résolution de m*x = b
   Eigen::VectorXd b = Eigen::VectorXd(lSize);
 
@@ -361,7 +380,6 @@ vector <double> calcul_deltaI_Complexe(RootTypes roots, vector<double> probabili
   for(s = 0; s<lSize; s++)
     b(s) = 0.0;
   b(u-1) = 1.0;
-
   // 3  Decomposition LU
   Eigen::FullPivLU<Eigen::MatrixXd> lu(m);
   // 4  Résolution système
@@ -369,11 +387,10 @@ vector <double> calcul_deltaI_Complexe(RootTypes roots, vector<double> probabili
   // 5  Convertion en vecteur
   for(int s = 0; s < solutions.rows(); s++)
     resultats.push_back(solutions[s]);
-
+  //    for(auto s:resultats)
+  //       cout<<s<<endl;
   return resultats;
 }
-
-
 //Rapport de stage 2002 Anne-Benedicte Urbano, "Conception d'un logiciel à but biologique", page 24
 complex<double> p_1(vector<double> distribution, complex<double> x, int u, int v){
   complex<double> result;
@@ -449,6 +466,134 @@ double calcul_probMaxPartialSum(int k, vector<double> distribution, int u, int v
   return(somme1+somme2);
 }
 
+// Calcul of the span \delta used in Karlin (1992) formulas, page 115, when X is lattice
+// The span is defined as the greatest common divisor of all the ecart of the score values
+// Example :
+// Score : -1, 0, 1, 2  -> span = 1
+// Score : -2, 0, 2     -> span = 2
+// Score : -3,-1, 1     -> span = 2
+// Score : -2, 2, 6     -> span = 4
+// Score : -1, 2, 6     -> span = 1
+// Score : -3, 1, 7     -> span = 2
+// Note : no parameters consistency checks as it is not intended to be call directly
+// Input : 
+//     v : opposite of min score value (generally positive value)
+//     u : max score value
+//     distribution : vector of probability of each score (of size u-v+1)
+int calcul_span_karlin(vector<double> distribution, int u, int v) {
+  double epsilon = 1e-15 ;
+  int span = 0 ;
+  vector<int> non_nul_probability_scores ;
+  vector<int> score_diff ;
+  //1. Calculate non null probability scores
+   for(unsigned int s = 0; s < distribution.size(); s++) {
+    if(std::fabs(distribution[s])>epsilon) // non null probability score
+      non_nul_probability_scores.push_back(s-v) ;
+    }
+  
+  // 2. Calculate all difference between non null probability scores (in place)
+  score_diff.reserve(non_nul_probability_scores.size()-1) ;
+  for(unsigned int s = 0; s < non_nul_probability_scores.size()-1; s++)
+    score_diff.push_back(non_nul_probability_scores[s+1] - non_nul_probability_scores[s]) ;
+
+  //3. Calculate greatest common divisor
+  span = score_diff[0] ;
+  for(unsigned int s = 1; s < score_diff.size(); s++) {
+    span = std::gcd(span, score_diff[s]) ;
+    if (span == 1) // just a trick to accelerate (useless to continue the loop if a gcd of 1 is already found)
+      return(1) ;
+    }
+  return(span) ;
+}
+
+// return a vector containing K_star, K+ and Lambda of Karlin distribution (voir p. 115-116 karlin et Dembo 1992)
+vector <double> calcul_karlin_parameters(vector<double> distribution, int u, int v) {
+  //    Algorithme de Karlin
+  unsigned int i ;
+  vector <double> error1(1, -1.0) ;
+  // 1   Calcul Polynome
+  vector <double> polynome = calcul_poly(u, v, distribution);
+  
+  // 2   Calcul Racines
+  vector <complex<double>> roots = eq_bairstow(polynome);
+  // Roots validity verification (last parameter is the limit value of norm of the calculus of the polynome for each root)
+  if (!verif_roots(polynome, roots, u, v, 1e-10)){
+    // cerr ne doit pas être utilisé avec R. Mise en commentaires des lignes ci-dessous.
+    // cerr << "ERROR calcul_karlin (cpp): 'roots' are not valid for the 'polynome'" <<endl;
+    // cerr << "karlin() function cannot be used in your case. Check the documentation of 'karlin()' for details" <<endl;
+    // cerr << "You could try to change your scoring discretisation step or use karlinMonteCarlo()" << endl;
+    // for (auto root: roots) {
+    //   cerr << root << endl ;
+   // }
+    return error1;
+  }
+   
+  // 3 Separation des racines avec un module <1
+  Roots roots_separated = separate(roots);
+  if(roots_separated.mod_smaller_one.size() != u){
+    // cerr << "ERROR calcul_karlin (cpp): roots_separated.mod_smaller_one.size() != u" <<endl;
+    return error1;
+  }
+  if(roots_separated.mod_greaterequal_one.size() != v){
+    // cerr << "ERROR calcul_karlin (cpp): roots_separated.mod_greaterequal_one.size() != v" <<endl;
+    return error1;
+  }
+  
+  // 4   Triage des Racines avec un module <1 par module decroissante
+  sort(roots_separated.mod_smaller_one.begin(), roots_separated.mod_smaller_one.end(), sortByModule_desc);
+  
+  // 5   Put real roots into first part of vector and complex ones into second part
+  orderbytype(roots_separated.mod_smaller_one);
+  
+  // 6   Calcul Lambda
+  double lambda = log(1.0/roots_separated.mod_smaller_one[0].real());
+  
+  // 8   Calcul Esperance de probabilités: p(x)*{-v..u}
+  double E = real(-v);
+  for(unsigned int s = 0; s< distribution.size(); s++)
+    E+=distribution[s]*real(s);
+  
+  // 9   Calcul probabilités S-
+  vector<double> probaSmoins = calcul_TabSmoins_cas_general_complexe(roots_separated.mod_greaterequal_one, v);
+  
+  // 10  Calcul Esperance Probabilités S-
+  double ESmoins = 0.0;
+  for(unsigned int s = 0; s< probaSmoins.size(); s++)
+    ESmoins+=probaSmoins[s]*(-real(s)-1.0);
+
+  // 11   Calcul mu
+  double mu = ESmoins/E;
+
+  // 12   Calcul K*
+  //  12.1 Calcul Esperance numerateur E[e^(lambda*S-)]
+  double E1 = 0.0;
+  for(unsigned int s = 0; s< probaSmoins.size(); s++)
+     E1+=probaSmoins[s]*exp(lambda*(-real(s)-1));  // XXX le -1 me semble de trop.
+    //E1+=probaSmoins[s]*exp(lambda*(-real(s)));  
+  
+  //   12.2 Calcul numerateur
+  //double span = double(u)+double(v) ; 
+  double span = (double) calcul_span_karlin(distribution, u, v) ;
+  double numerateur = pow(1-E1,2)*span;
+  //   12.3 Calcul Esperance denominateur
+  //        D'abord le calcul de E[X*e^(lambda*X)]
+  double E2 = 0.0;
+  for(unsigned int s = 0; s< distribution.size(); s++)
+  {
+    double x = double(s)-double(v) ; 
+    E2+=distribution[s]*x*exp(lambda*x);
+  }
+
+  //   12.4 Calcul denominateur
+  double denominateur = pow(mu, 2)*E2*(exp(lambda*span)-1.0);
+  
+  //   12.5 K*
+  double K_star = numerateur/denominateur;
+  double K_plus = exp(lambda*span)*K_star;
+  vector<double> karlinParameters = {K_star, K_plus, lambda};
+  return (karlinParameters);
+}
+
 // Return P(. >=localScore) with Karlin-Altschul approximation pvalue = 1.0-exp(-K_star*sequence_length*exp(-lambda*(localScore-1)))
 // localscore : value at calculation of the probability
 // u : maximum (individual) score
@@ -456,9 +601,10 @@ double calcul_probMaxPartialSum(int k, vector<double> distribution, int u, int v
 // distribution : vector of probability of the (individual) scores (from -v to u, length u+v+1)
 // sequence_length : length of the sequence of scores.
 // Code error return (< 0.0) :
-//    -1.0 : problème with polynomial roots
+//    -1.0 : problem with polynomial roots
 //    -2.0 : distribution vector size and u, v are not compatible
 double calcul_karlin(int localScore, vector<double> distribution, int u, int v, long sequence_length){
+  double epsilon = 1e-10 ;
   // Some checks of error
   if (distribution.size() != (u+v+1)) {
     //cerr << "ERROR calcul_karlin (cpp): u and/or v are not compatible with the size of 'distribution'" <<endl;
@@ -470,80 +616,27 @@ double calcul_karlin(int localScore, vector<double> distribution, int u, int v, 
     return 1.0;
   if (localScore==1)
     return 1.0 ;
+
+  // Calculus of K_star and lambda (Karlin parameters)
+  vector<double> karlin_parameters = calcul_karlin_parameters(distribution, u, v) ;
+  // Rcpp::Rcout << "Kstar : " << karlin_parameters[0] << "\n" ;
+  // Rcpp::Rcout << "K+ : " << karlin_parameters[1] << "\n" ;
+  // Rcpp::Rcout << "lambda : " << karlin_parameters[2] << "\n" ;
+  if (std::fabs(karlin_parameters[0] + 1.0)<epsilon) // ERROR in polynomial roots finding
+    return -1.0 ;
   
-  // 1   Calcul Polynome
-  vector <double> polynome = calcul_poly(u, v, distribution);
+  double K_star = karlin_parameters[0] ;
+  double K_plus = karlin_parameters[1] ;
+  double lambda = karlin_parameters[2] ;
 
-  // 2   Calcul Racines
-  vector <complex<double>> roots = eq_bairstow(polynome);
-  // Roots validity verification (last parameter is the limit value of norm of the calculus of the polynome for each root)
-  if (!verif_roots(polynome, roots, u, v, 1e-10)){
-    // cerr ne doit pas être utilisé avec R. Mise en commentaires des lignes ci-dessous.
-    // cerr << "ERROR calcul_karlin (cpp): 'roots' are not valid for the 'polynome'" <<endl;
-    // cerr << "karlin() function cannot be used in your case. Check the documentation of 'karlin()' for details" <<endl;
-    // cerr << "You could try to change your scoring discretisation step or use karlinMonteCarlo()" << endl;
-    // for (auto root: roots) {
-    //   cerr << root << endl ;
-    // }
-    return -1.0;
-  }
+  // Rcpp::Rcout << "pv Kstar : " << 1.0-exp(-K_star*sequence_length*exp(-lambda*(localScore-1))) << "\n" ;
+  // Rcpp::Rcout << "pv K+ : " << 1.0-exp(-K_star*sequence_length*exp(-lambda*(localScore))) << "\n" ;
 
-  // 3 Separation des racines avec un module <1
-  Roots roots_separated = separate(roots);
-  if(roots_separated.mod_smaller_one.size() != u){
-    // cerr << "ERROR calcul_karlin (cpp): roots_separated.mod_smaller_one.size() != u" <<endl;
-    return -1.0;
-  }
-  if(roots_separated.mod_greaterequal_one.size() != v){
-    // cerr << "ERROR calcul_karlin (cpp): roots_separated.mod_greaterequal_one.size() != v" <<endl;
-    return -1.0;
-  }
-  
-  // 4   Triage des Racines avec un module <1 par module decroissante
-  sort(roots_separated.mod_smaller_one.begin(), roots_separated.mod_smaller_one.end(), sortByModule_desc);
-
-  // 5   Put real roots into first part of vector and complex ones into second part
-  orderbytype(roots_separated.mod_smaller_one);
-
-  // 6   Calcul Lambda
-  double lambda = log(1.0/roots_separated.mod_smaller_one[0].real());
-  // 7   Substitution x pour formule de Karlin (log(n)/lambda+x)
-  // double x = localScore- floor((log(sequence_length)/lambda))-1; 
-  // 8   Calcul Esperance de probabilités: p(x)*{-v..u}
-  double E = real(-v);
-  for(unsigned int s = 0; s< distribution.size(); s++)
-    E+=distribution[s]*real(s);
-  // 9   Calcul probabilités S-
-  vector<double> probaSmoins = calcul_TabSmoins_cas_general_complexe(roots_separated.mod_greaterequal_one, v);
-  // 10  Calcul Esperance Probabilités S-
-  double ESmoins = 0.0;
-  for(unsigned int s = 0; s< probaSmoins.size(); s++)
-    ESmoins+=probaSmoins[s]*(-real(s)-1.0);
-  // 11   Calcul mu
-  double mu = ESmoins/E;
-  // 12   Calcul K*
-  //  12.1 Calcul Esperance numerateur E[e^(lambda*S-)]
-  double E1 = 0.0;
-  for(unsigned int s = 0; s< probaSmoins.size(); s++)
-    E1+=probaSmoins[s]*exp(lambda*(-real(s)-1));  // XXX le -1 me semble de trop.
-  //   12.2 Calcul numerateur
-  double numerateur = pow(1-E1,2);
-  //   12.3 Calcul Esperance denominateur
-  //        D'abord le calcul de E[X*e^(lambda*X)]
-  double E2 = 0.0;
-  for(unsigned int s = 0; s< distribution.size(); s++)
-    {
-    double x = double(s)-double(v) ;
-    E2+=distribution[s]*x*exp(lambda*x);
-  }
-  //   12.4 Calcul denominateur
-    double denominateur = pow(mu, 2)*E2*(exp(lambda)-1.0);
-  //   12.5 K*
-  double K_star = numerateur/denominateur;
-  // 13   Calcul p-Value
+  // Calculus of p-Value
   // localScore-1 needed because we want return P(. >=localScore) = 1-P(.<localScore) = 1-P(.<=localScore-1) [because localScore is integer]
+  // Note the the value return is totally equivalent to 1.0-exp(-K_plus*sequence_length*exp(-lambda*localScore))
   return (1.0-exp(-K_star*sequence_length*exp(-lambda*(localScore-1)))); 
-  //  return (1.0-exp(-K_star*exp(-lambda*x)));
+
 }
 
 //INPUT:    array probabilities for all x in scores de v to u
@@ -687,10 +780,12 @@ MatrixXd ind(MatrixXd input, int power){
   return input*result;
 }
 
+
+
 vector<VectorXcd> stationary_distribution( MatrixXd transitionMatrix){
   vector<double> result;
   double eps = 1e-12;
-  
+
   //1 Calcul vecteurs propres droits et valeurs propres
   EigenSolver<MatrixXd> es(transitionMatrix);
   //2 Determination du nombre des vecteurs propres avec longeur 1: si 1, bien, si 2 qu'est-ce qu'on fait? Si zero?
@@ -838,3 +933,4 @@ double mh_markov(int localscore, MatrixXd transitionMatrix, VectorXi scoreValues
   }
   return p_value;
 }
+

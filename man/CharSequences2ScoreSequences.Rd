@@ -7,9 +7,9 @@
 CharSequences2ScoreSequences(sequences, dictionary)
 }
 \arguments{
-\item{sequences}{a list of character sequences}
+\item{sequences}{a list of character sequences given as string}
 
-\item{dictionary}{a dictionary}
+\item{dictionary}{a data.frame with rownames containing letters, first column containing associated scores, optional second column containing associated probabilities}
 }
 \value{
 a list of score sequences
@@ -18,11 +18,14 @@ a list of score sequences
 Convert several character sequence into score sequences. For only one sequence see CharSequence2ScoreSequence() function.
 }
 \examples{
-data(ShortSeq)
-ShortSeq
-data(MidSeq)
-MidSeq
-data(dico)
-MySequences=list("A1"=ShortSeq,"A2"=MidSeq)
-CharSequences2ScoreSequences(MySequences,dico)
+data(Seq31)
+Seq31
+data(Seq219)
+Seq219
+data(HydroScore)
+MySequences=list("A1"=Seq31,"A2"=Seq219)
+CharSequences2ScoreSequences(MySequences,HydroScore)
+}
+\seealso{
+\code{\link{CharSequence2ScoreSequence}}
 }

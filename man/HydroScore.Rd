@@ -3,7 +3,7 @@
 \docType{data}
 \name{HydroScore}
 \alias{HydroScore}
-\title{Dictionnaire}
+\title{Dictionary}
 \format{
 A score function for the 20 amino acid
 }
@@ -11,7 +11,7 @@ A score function for the 20 amino acid
 Kyte & Doolittle (1982) J. Mol. Biol. 157, 105-132
 }
 \usage{
-HydroScore
+data(HydroScore)
 }
 \description{
 Provides integer scores related to an hydrophobicity level of each amino acid. This score function is inspired by the Kyte and Doolittle (1982) scale.
@@ -21,7 +21,7 @@ data(HydroScore)
 HydroScore
 data(Seq219)
 Seq219
-seqScore=CharSequence2ScoreSequence(Seq219,HydroScore)
+seqScore <- CharSequence2ScoreSequence(Seq219,HydroScore)
 seqScore[1:30]
 localScoreC(seqScore)$localScore
 }

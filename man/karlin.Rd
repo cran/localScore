@@ -2,18 +2,21 @@
 % Please edit documentation in R/RcppExports.R
 \name{karlin}
 \alias{karlin}
+\alias{karlin_parameters}
 \title{Karlin [p-value] [iid]}
 \usage{
 karlin(
-  localScore,
+  local_score,
   sequence_length,
   score_probabilities,
   sequence_min,
   sequence_max
 )
+
+karlin_parameters(score_probabilities, sequence_min, sequence_max)
 }
 \arguments{
-\item{localScore}{the observed local score}
+\item{local_score}{the observed local score}
 
 \item{sequence_length}{length of the sequence (at least several hundreds)}
 
@@ -24,10 +27,11 @@ karlin(
 \item{sequence_max}{maximum score}
 }
 \value{
-A double representing the probability of a localScore as high as the one given as argument
+A double representing the probability of a local score as high as the one given as argument
 }
 \description{
-Calculates an approximated p-value of a given local score value and a long sequence length in the identically and independantly distributed model for the sequence. See also mcc() function for another approximated method in the i.i.d. model
+\code{karlin} Calculates an approximated p-value of a given local score value and a long sequence length in the identically and independently distributed model for the sequence. See also \code{\link{mcc}} function for another approximated method in the i.i.d. model that improved the one given by \code{\link{karlin}} or \code{\link{daudin}} for exact calculation. \cr
+\code{karlin_parameters} is a annex function returning the parameters \eqn{\lambda}, \eqn{K^+} and \eqn{K^*} defined in Karlin and Dembo (1992).
 }
 \details{
 This method works the better the longer the sequence is. Important note : the calculus of the parameter of the distribution uses
@@ -35,7 +39,14 @@ the resolution of a polynome which is a function of the score distribution, of o
 with no warranty of reliable solution.
 The found roots are checked internally to the function and an error message is throw in case of inconsistent. In such case, you could try to change your score scheme (in case of discretization)
 or use the function \code{\link{karlinMonteCarlo}} .
+This function implements the formulae given in Karlin and Dembo (1992), page 115-6. As the score is discrete here (lattice score function),
+there is no limit distribution of the local score with the size of the sequence, but an inferior and a superior bound
+are given. The output of this function is conservative as it gives the upper bound for the p-value.
+Notice the lower bound can easily be found as it is the same call of function with parameter value local_score+1.
 }
 \examples{
 karlin(150, 10000, c(0.08, 0.32, 0.08, 0.00, 0.08, 0.00, 0.00, 0.08, 0.02, 0.32, 0.02), -5, 5)
+}
+\seealso{
+\code{\link{mcc}}, \code{\link{daudin}}, \code{\link{karlinMonteCarlo}}, \code{\link{monteCarlo}}
 }

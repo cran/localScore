@@ -1,4 +1,4 @@
-context("Test of generic functions around Markov models")
+context("Test of stationary_distribution function for Markov models")
 
 test_that("Stationary distribution", {
   

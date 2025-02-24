@@ -19,7 +19,7 @@ maxPartialSumd(k, score_probabilities, sequence_min, sequence_max)
 A double representing the probability of the maximum of the partial sum process equal to k
 }
 \description{
-Calculates the distribution of the maximum of the partial sum process for a given value in the identically and independantly distributed model
+Calculates the distribution of the maximum of the partial sum process for a given value in the identically and independently distributed model
 }
 \details{
 Implement the formula (4) of the article Mercier, S., Cellier, D., & Charlot, D. (2003). An improved approximation for assessing the statistical significance of molecular sequence features. Journal of Applied Probability, 40(2), 427-441. doi:10.1239/jap/1053003554 \cr

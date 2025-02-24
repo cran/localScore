@@ -11,7 +11,7 @@ A matrix of 2191 lines and 2 columns. Each line is a day on the first column, an
 Dolk H. Secular pattern of congenital oesophageal atresia--George Knox, 1959. J Epidemiol Community Health. 1997;51(2):114-115. <doi:10.1136/jech.51.2.114>
 }
 \usage{
-Aeso
+data(Aeso)
 }
 \description{
 The data consists of individual dates of birth over n=35 cases of the birth defects oesophageal and tracheo-oesophagean fistula

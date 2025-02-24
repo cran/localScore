@@ -35,7 +35,6 @@ std::vector<std::complex<double> > eq_trinome(double p,double q);
 
 //calculates real and complex roots of polynom with coefficients a and degre n with level of precision e
 std::vector<std::complex<double> > eq_bairstow(std::vector<double> polynom, double eps);
-
 void printArray (int length, double* array);
 
 //void testing ();
@@ -48,9 +47,12 @@ Roots separate (std::vector<std::complex<double> >);
 std::vector<double> calcul_TabSmoins_cas_general_complexe(std::vector<std::complex<double> > roots_greater_one, int v);
 
 // Return P(M = k) = \sum_i delta_i*R_i^k : Distribution du maximum des sommes partiels.
+
 // Formule (4) page 5 du papier MCC (2003)
 double calcul_probMaxPartialSum(int k, std::vector<double> distribution, int u, int v);
 
+int calcul_span_karlin(std::vector<double> distribution, int u, int v); 
+std::vector <double> calcul_karlin_parameters(std::vector<double> distribution, int u, int v);
 double calcul_karlin(int localScore, std::vector<double> distribution, int u, int v, long sequence_length);
 
 double calcul_mcc(int localScore, std::vector<double> distribution, int u, int v, long sequence_length);
@@ -59,7 +61,7 @@ std::complex<double> p_1(std::vector<double> distribution, std::complex<double> 
 
 double p_1(std::vector<double> distribution, double x, int u, int v);
 
-std::vector<double> calcul_deltaI_Complexe(std::vector<std::complex<double> > complexRoots, std::vector<double> probabilities, int u, int v);
+std::vector <double> calcul_deltaI_Complexe(std::vector<std::complex<double> > complexRoots, std::vector<double> probabilities, int u, int v);
 
 double calcul_daudin(int a, int n, std::vector <double> score_probabilities, int smin, int smax);
 
@@ -77,6 +79,9 @@ double mh_markov(int localscore, Eigen::MatrixXd transitionMatrix, Eigen::Vector
 
 //deprecated:
 /*
+Tuple index2tuple(int i, Tuple intervall_t1, Tuple intervall_t2);
+double mh_markov(int localscore, Eigen::MatrixXd transitionMatrix, long sequence_length,  int s_min, int s_max);
+int card(Tuple interval);
 void indienne(double *MatE, int tE, int nE, double *SortieExp);
 double calcul_daudinOLD(int a, int n, std::vector <double> score_probabilities, int smin, int smax);
 void creationPI(double *distC, int mC, int tailleC, double *PIC,int a, int smin, int smax);

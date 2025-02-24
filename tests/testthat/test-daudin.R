@@ -1,19 +1,19 @@
 context("Test of R function daudin")
 
 test_that("Example from the R documentation of daudin(.)", {
-  p <- daudin(localScore = 4, sequence_length = 50, 
+  p <- daudin(local_score = 4, sequence_length = 50, 
               score_probabilities = c(0.2, 0.3, 0.1, 0.2, 0.1, 0.1), sequence_min = -3, sequence_max = 2)
   expect_equal(p, 0.5700479,tolerance=1e-7)
 })
 
 test_that("Case 1 from the issue #7326 on the forge DGA", {
   prob <- c(0.951855990, 0.003892646, 0.000000000, 0.004302711, 0.039948653)
-  p <- daudin(localScore=4, sequence_length=39, sequence_min=-2, sequence_max=2, score_probabilities=prob)
+  p <- daudin(local_score=4, sequence_length=39, sequence_min=-2, sequence_max=2, score_probabilities=prob)
   expect_equal(p, 0.05712747)
 })
 
 test_that("Full cases from the issue #7326 on the forge DGA", {
-  daudin.dat <- structure(list(localScore = c(29L, 15L, 4L, 12L, 12L, 12L, 4L, 
+  daudin.dat <- structure(list(local_score = c(29L, 15L, 4L, 12L, 12L, 12L, 4L, 
                                                5L, 4L, 14L, 4L, 18L, 4L, 4L, 11L, 5L, 15L, 12L, 4L, 4L, 4L, 
                                                16L, 4L, 4L, 4L, 4L, 4L, 5L, 4L, 4L, 11L, 4L, 4L, 16L, 5L, 5L, 
                                                5L, 5L, 5L, 4L, 4L, 4L, 5L, 15L, 5L, 52L, 4L, 4L, 5L, 4L, 20L, 
@@ -89,10 +89,72 @@ test_that("Full cases from the issue #7326 on the forge DGA", {
   n <- dim(daudin.dat)[1]
   p <- rep(NA,n)
   for (i in 1:n) {
-    p[i] <- daudin(localScore=daudin.dat$localScore[i], sequence_length=daudin.dat$longeur_sequence[i], sequence_min=-2, sequence_max=2, score_probabilities=prob)
+    p[i] <- daudin(local_score=daudin.dat$local_score[i], sequence_length=daudin.dat$longeur_sequence[i], sequence_min=-2, sequence_max=2, score_probabilities=prob)
   }
   # Developper note : the '!!' is to print the value of 'i' in the output (useful to debug failed tests)
   for (i in 1:n) {
     expect_equal(p[!!i],expectedPv[!!i])
   }
+})
+
+## Input Error testing
+test_that("Entry probability does not sum to 1.0", {
+  prob <- c(0.6,0.1,0.1,0.1) # sum to 0.9 (error)
+  expect_error(daudin(150, 10000, prob, -2, 1), "[Invalid Input] score_probabilities must sum to 1.0.", fixed = TRUE)
+})
+
+
+############## Link to ticket #10382 on forge DGA #######################
+test_that("Leading zero probability element does not change the results", {
+  prob <- c(0.08, 0.32, 0.08, 0.00, 0.08, 0.00, 0.00, 0.08, 0.02, 0.32, 0.02)
+  prob0 <- c(0,prob)
+  p <- daudin(150, 10000, prob, -5, 5)
+  p0 <- daudin(150, 10000, prob0, -5-1, 5)
+  expect_equal(p, p0)
+})
+
+test_that("Leading multiple zero probability elements does not change the results", {
+  prob <- c(0.08, 0.32, 0.08, 0.00, 0.08, 0.00, 0.00, 0.08, 0.02, 0.32, 0.02)
+  prob0 <- c(0,0,0,0,prob)
+  p <- daudin(150, 10000, prob, -5, 5)
+  p0 <- daudin(150, 10000, prob0, -5-4, 5)
+  expect_equal(p, p0)
+})
+
+test_that("Trailing zero probability element does not change the results", {
+  prob <- c(0.08, 0.32, 0.08, 0.00, 0.08, 0.00, 0.00, 0.08, 0.02, 0.32, 0.02)
+  prob0 <- c(prob,0)
+  p <- daudin(150, 10000, prob, -5, 5)
+  p0 <- daudin(150, 10000, prob0, -5, 5+1)
+  expect_equal(p, p0)
+})
+
+test_that("Trailing multiple zero probability elements does not change the results", {
+  prob <- c(0.08, 0.32, 0.08, 0.00, 0.08, 0.00, 0.00, 0.08, 0.02, 0.32, 0.02)
+  prob0 <- c(prob, 0,0,0,0)
+  p <- daudin(150, 10000, prob, -5, 5)
+  p0 <- daudin(150, 10000, prob0, -5, 5+4)
+  expect_equal(p, p0)
+})
+
+test_that("Leading and trailing multiple zero probability elements does not change the results", {
+  prob <- c(0.08, 0.32, 0.08, 0.00, 0.08, 0.00, 0.00, 0.08, 0.02, 0.32, 0.02)
+  prob0 <- c(0,0,0,0,prob,0,0)
+  p <- daudin(150, 10000, prob, -5, 5)
+  p0 <- daudin(150, 10000, prob0, -5-4, 5+2)
+  expect_equal(p, p0)
+})
+###################################################################################
+
+test_that("Zero probability elements does not change the results", {
+  # En pratique, on multiplie par deux tous les scores ; théoriquement, on doit trouver la même p-value
+  prob <- c(0.6, 0.1, 0.1, 0.2)
+  scoremin <- -1
+  scoremax <- scoremin + length(prob) -1 #2
+  scoremin2 <- scoremin*2 #-2
+  scoremax2 <- scoremax*2 #4
+  prob0 <- c(0.6, 0.0, 0.1, 0.0, 0.1, 0.0, 0.2)
+  p <- daudin(80, 10000, prob, scoremin, scoremax)
+  p0 <- daudin(80*2, 10000, prob0, scoremin2, scoremax2)
+  expect_equal(p, p0)
 })

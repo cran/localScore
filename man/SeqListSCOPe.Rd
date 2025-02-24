@@ -11,7 +11,7 @@ A list of 285 character strings with their entry codes as names
 Structural Classification Of Proteins database (SCOP). More precisely this data contain the 285 protein sequences of the data called "CF_scop2dom_20140205aa" with length from 31 to 404.
 }
 \usage{
-SeqListSCOPe
+data(SeqListSCOPe)
 }
 \description{
 A vector of character strings
@@ -23,9 +23,9 @@ SeqListSCOPe[1]
 nchar(SeqListSCOPe[1])
 summary(sapply(SeqListSCOPe, nchar))
 data(HydroScore)
-MySeqScoreList=lapply(SeqListSCOPe, FUN=CharSequence2ScoreSequence, HydroScore)
+MySeqScoreList <- lapply(SeqListSCOPe, FUN=CharSequence2ScoreSequence, HydroScore)
 head(MySeqScoreList)
-AA=automatic_analysis(sequences=MySeqScoreList, model='iid')
+AA <- automatic_analysis(sequences=MySeqScoreList, model='iid')
 AA[[1]]
 # the p-value of the first 10 sequences 
 sapply(AA, function(x){x$`p-value`})[1:10]
@@ -35,7 +35,7 @@ which(sapply(AA, function(x){x$`p-value`})<0.05)
 table(sapply(AA, function(x){x$`method`}))
 # The maximum sequence length equals 404 so it here normal that the exact method is used for
 # all the 606 sequences of the data base 
-# Score distribution learnt on the data set
+# Score distribution learned on the data set
 scoreSequences2probabilityVector(MySeqScoreList)
 }
 \keyword{datasets}

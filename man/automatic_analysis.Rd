@@ -18,7 +18,7 @@ automatic_analysis(
 )
 }
 \arguments{
-\item{sequences}{sequences to be analysed (named list)}
+\item{sequences}{sequences to be analyzed (named list)}
 
 \item{model}{the underlying model of the sequence (either "iid" for identically independently distributed variable or "markov" for Markov chains)}
 
@@ -74,7 +74,9 @@ l[["hello"]] = seq1
 l[["world"]] = seq2
 automatic_analysis(l, "iid")
 # Example with a given distribution 
-automatic_analysis(l,"iid",scores=c(-3,1),distribution=c(0.3,0.3,0.1,0.1,0.2))
+automatic_analysis(l,"iid",scores=-3:1,distribution=c(0.3,0.3,0.1,0.1,0.2))
+#Equivalent call
+automatic_analysis(l,"iid",score_extremes=c(-3,1),distribution=c(0.3,0.3,0.1,0.1,0.2))
 # forcing the exact method for the longest sequence
 aa1=automatic_analysis(l,"iid")
 aa1$hello$`method applied`

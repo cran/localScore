@@ -42,8 +42,8 @@ test_that("Non ergodic Markov Chain", {
 test_that("Bad probability vector input", {
   mTransition <- t(matrix(c(0.2, 0.3, 0.5, 0.3, 0.4, 0.3, 0.2, 0.4, 0.4), nrow = 3))
   scoreValues <- -1:1
-  expect_error( exact_mc(localScore = 12, m = mTransition, sequence_length = 100, prob0 = -1:1),"[ERROR exact_mc : Invalid Input] prob0 vector should sum to 1",fixed = TRUE)
-  expect_error( exact_mc(localScore = 12, m = mTransition, sequence_length = 100, prob0 = c(0,2,-1)),"[ERROR exact_mc : Invalid Input] prob0 vector should contains values between 0 and 1",fixed = TRUE)
+  expect_error( exact_mc(local_score = 12, m = mTransition, sequence_length = 100, prob0 = -1:1),"[ERROR exact_mc : Invalid Input] prob0 vector should sum to 1",fixed = TRUE)
+  expect_error( exact_mc(local_score = 12, m = mTransition, sequence_length = 100, prob0 = c(0,2,-1)),"[ERROR exact_mc : Invalid Input] prob0 vector should contains values between 0 and 1",fixed = TRUE)
 })
 
 test_that("prob0 specifed or not", {
@@ -89,6 +89,25 @@ test_that("Minimal call",{
   LS <- 4
   rownames(P0) <- -2:1
   expect_equal(exact_mc(LS, P0, n), 0.01976)  
+})
+
+test_that("Comparison exact_mc with daudin() in cas i.i.d", {
+  probs <- c(0.3, 0.1, 0.2, 0.2, 0.1, 0.1)
+  P0 <- matrix(ncol = 6, nrow = 6)
+  P0[1,] <- probs
+  P0[2,] <- probs
+  P0[3,] <- probs
+  P0[4,] <- probs
+  P0[5,] <- probs
+  P0[6,] <- probs
+  scoremin <- -3
+  scoremax <- 2
+  rownames(P0) <- scoremin:scoremax
+  n <- 100
+  LS <- 5
+  pEMC <- exact_mc(LS, P0, n)
+  pDaudin <- daudin(LS, n , probs, scoremin, scoremax)
+  expect_equal(pEMC, pDaudin)
 })
 
 

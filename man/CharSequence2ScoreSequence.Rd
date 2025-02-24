@@ -4,22 +4,25 @@
 \alias{CharSequence2ScoreSequence}
 \title{Convert a character sequence into a score sequence}
 \usage{
-CharSequence2ScoreSequence(sequence, dictionary)
+CharSequence2ScoreSequence(charseq, dictionary)
 }
 \arguments{
-\item{sequence}{a character sequence}
+\item{charseq}{a character sequence, given as a string}
 
-\item{dictionary}{a dictionary}
+\item{dictionary}{a data.frame with rownames containing letters, first column containing associated scores, optional second column containing associated probabilities}
 }
 \value{
 a vector of a score sequence
 }
 \description{
-Convert a character sequence into a score sequence. See CharSequences2ScoreSequences() fonction for several sequences
+Convert a character sequence into a score sequence. See CharSequences2ScoreSequences() function for several sequences
 }
 \examples{
-data(ShortSeq)
-ShortSeq
-data(dico)
-CharSequence2ScoreSequence(ShortSeq,dico)
+data(Seq31)
+Seq31
+data(HydroScore)
+CharSequence2ScoreSequence(Seq31,HydroScore)
+}
+\seealso{
+\code{\link{CharSequences2ScoreSequences}}
 }

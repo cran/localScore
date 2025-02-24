@@ -11,7 +11,7 @@ A character string with 219 characters corresponding to P49755.fasta query in Un
 \url{https://www.uniprot.org/}
 }
 \usage{
-Seq219
+data(Seq219)
 }
 \description{
 A protein sequence.
@@ -24,14 +24,14 @@ data(HydroScore)
 seqScore=CharSequence2ScoreSequence(Seq219,HydroScore)
 seqScore[1:30]
 localScoreC(seqScore)$localScore
-prob1 = scoreSequences2probabilityVector(list(seqScore))
-daudin(localScore = 52, sequence_length = nchar(Seq219),
+prob1 <- scoreSequences2probabilityVector(list(seqScore))
+daudin(local_score = 52, sequence_length = nchar(Seq219),
                score_probabilities = prob1,
                sequence_min = min(seqScore),
                sequence_max = max(seqScore))
-score=-5:5
-prob2=c(0.15,0.15,0.1,0.1,0.0,0.05,0.15,0.05,0.2,0.0,0.05)
-daudin(localScore = 52, sequence_length = nchar(Seq219),
+score <- -5:5
+prob2 <- c(0.15,0.15,0.1,0.1,0.0,0.05,0.15,0.05,0.2,0.0,0.05)
+daudin(local_score = 52, sequence_length = nchar(Seq219),
        score_probabilities = prob2,
        sequence_min = min(seqScore),
        sequence_max = max(seqScore))

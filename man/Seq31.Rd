@@ -11,7 +11,7 @@ A character string with 31 characters "MLTITSYFGFLLAALTITSVLFIGLNKIRLI"
 \url{https://www.uniprot.org/}
 }
 \usage{
-Seq31
+data(Seq31)
 }
 \description{
 A short protein sequence of 31 amino acids corresponding to Q09FU3.fasta query in UniProt Data base.
@@ -21,21 +21,21 @@ data(Seq31)
 Seq31
 nchar(Seq31)
 data(HydroScore) 
-SeqScore=CharSequence2ScoreSequence(Seq31,HydroScore)
+SeqScore <- CharSequence2ScoreSequence(Seq31,HydroScore)
 SeqScore
 localScoreC(SeqScore)$localScore
-LS=localScoreC(SeqScore)$localScore[1]
-prob1 = scoreSequences2probabilityVector(list(SeqScore))
-daudin(localScore = LS, sequence_length = nchar(Seq31),
+LS <- localScoreC(SeqScore)$localScore[1]
+prob1 <- scoreSequences2probabilityVector(list(SeqScore))
+daudin(local_score = LS, sequence_length = nchar(Seq31),
                score_probabilities = prob1,
                sequence_min = min(SeqScore),
                sequence_max = max(SeqScore))
-score=-5:5
-prob2=c(0.15,0.15,0.1,0.1,0.0,0.05,0.15,0.05,0.2,0.0,0.05)
+score <- -5:5
+prob2 <- c(0.15,0.15,0.1,0.1,0.0,0.05,0.15,0.05,0.2,0.0,0.05)
 sum(prob2*score)
-karlin(localScore = LS, sequence_length = nchar(Seq31),
-score_probabilities = prob2,
-sequence_min = min(SeqScore),
-sequence_max = max(SeqScore))
+karlin(local_score = LS, sequence_length = nchar(Seq31),
+       score_probabilities = prob2,
+       sequence_min = min(SeqScore),
+       sequence_max = max(SeqScore))
 }
 \keyword{datasets}

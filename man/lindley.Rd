@@ -16,7 +16,7 @@ a vector with the Lindley process steps
 Creates a sequence of a Lindley process, also called CUSUM process, on a given sequence.  For a sequence (X_k)k, the Lindley process is defined as follows: W_0:=0 and W_(k+1)=max(0,W_k+X_(k+1)). It defines positive excursions above 0.
 }
 \examples{
-seq=c(1,2,3,-4,1,-3,-1,2,3,-4,1)
-lindley(seq)
-plot(1:length(seq),lindley(seq),type='b')
+MySeq <- c(1,2,3,-4,1,-3,-1,2,3,-4,1)
+lindley(MySeq)
+plot(1:length(MySeq),lindley(MySeq),type='b')
 }

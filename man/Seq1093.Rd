@@ -11,7 +11,7 @@ A character string with 1093 characters corresponding to Q60519.fasta in UniProt
 \url{https://www.uniprot.org/}
 }
 \usage{
-Seq1093
+data(Seq1093)
 }
 \description{
 A long protein sequence.
@@ -21,18 +21,18 @@ data(Seq1093)
 Seq1093
 nchar(Seq1093)
 data(HydroScore)
-seqScore=CharSequence2ScoreSequence(Seq1093,HydroScore)
+seqScore <- CharSequence2ScoreSequence(Seq1093,HydroScore)
 seqScore[1:50]
 localScoreC(seqScore)$localScore
-LS=localScoreC(seqScore)$localScore[1]
-prob1 = scoreSequences2probabilityVector(list(seqScore))
-daudin(localScore = LS, sequence_length = nchar(Seq1093),
-               score_probabilities = prob1,
-               sequence_min = min(seqScore),
-               sequence_max = max(seqScore))
-karlin(localScore = LS, sequence_length = nchar(Seq1093),
-score_probabilities = prob1,
-sequence_min = min(seqScore),
-sequence_max = max(seqScore))
+LS <- localScoreC(seqScore)$localScore[1]
+prob1 <- scoreSequences2probabilityVector(list(seqScore))
+daudin(local_score = LS, sequence_length = nchar(Seq1093),
+       score_probabilities = prob1,
+       sequence_min = min(seqScore),
+       sequence_max = max(seqScore))
+karlin(local_score = LS, sequence_length = nchar(Seq1093),
+       score_probabilities = prob1,
+       sequence_min = min(seqScore),
+       sequence_max = max(seqScore))
 }
 \keyword{datasets}

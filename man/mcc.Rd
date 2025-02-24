@@ -5,7 +5,7 @@
 \title{MCC [p-value] [iid]}
 \usage{
 mcc(
-  localScore,
+  local_score,
   sequence_length,
   score_probabilities,
   sequence_min,
@@ -13,7 +13,7 @@ mcc(
 )
 }
 \arguments{
-\item{localScore}{the observed local score}
+\item{local_score}{the observed local score}
 
 \item{sequence_length}{length of the sequence (up to one hundred)}
 
@@ -27,7 +27,7 @@ mcc(
 A double representing the probability of a local score as high as the one given as argument
 }
 \description{
-Calculates an approximated p-value for a given local score value and a medium to long sequence length in the identically and independantly distributed model
+Calculates an approximated p-value for a given local score value and a medium to long sequence length in the identically and independently distributed model
 }
 \details{
 This methods is actually an improved method of Karlin and produces more precise results. It should be privileged whenever possible. \cr
@@ -40,4 +40,7 @@ or use the function \code{\link{karlinMonteCarlo}} .
 \examples{
 mcc(40, 100, c(0.08, 0.32, 0.08, 0.00, 0.08, 0.00, 0.00, 0.08, 0.02, 0.32, 0.02), -6, 4)
 mcc(40, 10000, c(0.08, 0.32, 0.08, 0.00, 0.08, 0.00, 0.00, 0.08, 0.02, 0.32, 0.02), -6, 4)
+}
+\seealso{
+\code{\link{karlin}}, \code{\link{daudin}}, \code{\link{karlinMonteCarlo}}, \code{\link{monteCarlo}}
 }

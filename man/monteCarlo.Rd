@@ -2,9 +2,19 @@
 % Please edit documentation in R/rMethods.R
 \name{monteCarlo}
 \alias{monteCarlo}
+\alias{monteCarlo_double}
 \title{Monte Carlo method [p-value]}
 \usage{
-monteCarlo(local_score, FUN, ..., plot = TRUE, numSim = 1000)
+monteCarlo(local_score, FUN, ..., plot = TRUE, numSim = 1000, keepSimu = FALSE)
+
+monteCarlo_double(
+  local_score,
+  FUN,
+  ...,
+  plot = TRUE,
+  numSim = 1000,
+  keepSimu = FALSE
+)
 }
 \arguments{
 \item{local_score}{local score observed in a segment.}
@@ -16,32 +26,65 @@ monteCarlo(local_score, FUN, ..., plot = TRUE, numSim = 1000)
 \item{plot}{boolean value if to display plots for cumulated function and density}
 
 \item{numSim}{number of sequences to generate during simulation}
+
+\item{keepSimu}{Boolean, default to FALSE. If TRUE, the simulated local scores are returned as the localScores element of the output list.}
 }
 \value{
-Floating value corresponding to the probability to obtain a local score with value greater or equal to the parameter
+If \code{keepSimu} is FALSE, returns a numeric value corresponding to the probability to obtain a local score with value greater or equal to the parameter \code{local_score}. \cr
+If \code{keepSimu} is TRUE, returns a list containing:\tabular{ll}{
+    \code{p_value} \tab Floating value corresponding to the probability to obtain a local score with a value greater or equal to the parameter \code{local_score} \cr
+    \code{localScores} \tab Vector of size \code{numSim} containing the simulated local scores
+}
 }
 \description{
-Calculates an empirical p-value based on simulations of similar integer sequences of the same length.
-Perfect for small sequences (both markov chains and identically and independantly distributed) with length ~ 10^3. 
-See function monteCarlo_double() for possible real scores.
+Calculates an empirical p-value based on Monte Carlo simulations.
+Perfect for small sequences (both markov chains and identically and independently distributed) with length ~ 10^3.
 }
+\details{
+Be careful that the parameters names of the function FUN should differ from those of monteCarlo function.\cr
+The density plot produced by \code{plot == TRUE} depends on the type of the simulated local scores: 
+if they are integer, a barplot of relative frequency is used, else \code{plot(density(...))} is used. \cr
+This function calls \code{\link{localScoreC}} which type of the output depends on the type of the input. 
+To be efficient, be aware to use a simulating function \code{FUN} that return a vector of adequate type ("integer" or "numeric"). Warning: in R, \code{typeof(c(1,3,4,10)) == "double"}. You can set a type of a vector with \code{mode()} or \code{as.integer()} functions for example. \cr 
+\code{monteCarlo_double()} is deprecated. At this point, it is just a call to \code{monteCarlo()} function.
+}
+\section{Functions}{
+\itemize{
+\item \code{monteCarlo_double()}: Monte-Carlo function for double [deprecated]
+
+}}
 \examples{
 \donttest{
 monteCarlo(120, FUN = rbinom, n = 100, size = 5, prob=0.2)
 }
-new = sample(-7:6, replace = TRUE, size = 1000)
-#MonteCarlo taking random sample from the input sequence itself
 \donttest{
-monteCarlo(local_score = 20, FUN = function(x) {return(sample(x = x, 
-size = length(x), replace = TRUE))}, x=new)
+mySeq <- sample(-7:3, replace = TRUE, size = 1000)
+monteCarlo(local_score = 18, FUN = function(x) {return(sample(x = x, 
+           size = length(x), replace = TRUE))}, x = mySeq)
 }
+\donttest{
+#Examples of non integer score function
+mySeq2 <- sample(-7:6 - 0.5, replace = TRUE, size = 1000)
+monteCarlo(local_score = 50.5, FUN = function(x) {return(sample(x = x, 
+           size = length(x), replace = TRUE))}, x = mySeq2)
+}
+\donttest{
+#Examinating simulated local scores
+mySeq2 <- sample(-7:6, replace = TRUE, size = 1000)
+simu <- monteCarlo(local_score = 50.5, FUN = function(x) {return(sample(x = x, 
+           size = length(x), replace = TRUE))}, x = mySeq2, keepSimu = TRUE)
+hist(simu$localScores)
+}
+\donttest{
 # Markovian example
 MyTransMat <-
-+     matrix(c(0.3,0.1,0.1,0.1,0.4, 0.2,0.2,0.1,0.2,0.3, 0.3,0.4,0.1,0.1,0.1, 0.3,0.3,0.1,0.0,0.3,
-+              0.1,0.1,0.2,0.3,0.3), ncol = 5, byrow=TRUE)
-\donttest{
+    matrix(c(0.3,0.1,0.1,0.1,0.4, 0.2,0.2,0.1,0.2,0.3, 0.3,0.4,0.1,0.1,0.1, 0.3,0.3,0.1,0.0,0.3,
+             0.1,0.1,0.2,0.3,0.3), ncol = 5, byrow=TRUE)
 monteCarlo(local_score = 50,
           FUN = transmatrix2sequence, matrix = MyTransMat,
           length=150, score = c(-2,-1,0,2,3), plot=FALSE, numSim = 5000)
 }
+}
+\seealso{
+\code{\link{karlinMonteCarlo}} \code{\link{localScoreC}}
 }

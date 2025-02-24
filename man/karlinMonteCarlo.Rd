@@ -2,6 +2,7 @@
 % Please edit documentation in R/rMethods.R
 \name{karlinMonteCarlo}
 \alias{karlinMonteCarlo}
+\alias{karlinMonteCarlo_double}
 \title{Monte Carlo - Karlin [p-value]}
 \usage{
 karlinMonteCarlo(
@@ -11,46 +12,122 @@ karlinMonteCarlo(
   FUN,
   ...,
   numSim = 1000,
-  plot = TRUE
+  plot = TRUE,
+  keepSimu = FALSE
+)
+
+karlinMonteCarlo_double(
+  local_score,
+  sequence_length,
+  simulated_sequence_length,
+  FUN,
+  ...,
+  numSim = 1000,
+  plot = TRUE,
+  keepSimu = FALSE
 )
 }
 \arguments{
-\item{local_score}{local score observed in a segment.}
+\item{local_score}{local score observed in a sequence.}
 
 \item{sequence_length}{length of the sequence}
 
-\item{simulated_sequence_length}{length of simulated sequences produced by FUN}
+\item{simulated_sequence_length}{length of simulated sequences produced by}
 
 \item{FUN}{function to simulate similar sequences with.}
 
 \item{...}{parameters for FUN}
 
-\item{numSim}{number of sequences to create for estimation}
+\item{numSim}{number of sequences to create for estimation
+FUN}
 
-\item{plot}{boolean value if to display plots for cumulated function and density}
+\item{plot}{boolean value if to display plots for cumulated function, density
+and linearization of cumulative density function}
+
+\item{keepSimu}{Boolean, default to FALSE. If TRUE, the simulated local
+scores are returned as the localScores element of the output list.}
 }
 \value{
-Floating value corresponding to the probability to obtain a local score with a value greater or equal to the parameter local_score
+If \code{keepSimu} is FALSE, returns a list containing:\tabular{ll}{
+  \code{p_value} \tab Probability to obtain a local score with a value
+  greater or equal to the parameter \code{local_score} \cr \tab \cr \code{K*}
+  \tab Parameter \eqn{K^*} defined in Karlin and Dembo (1990) \cr \tab
+  \cr \code{lambda} \tab Parameter \eqn{\lambda} defined in Karlin and
+  Dembo (1990) \cr }
+If \code{keepSimu} is TRUE, returns a list containing:\tabular{ll}{
+    \code{p_value} \tab Probability to obtain a local score with a value greater or equal to the parameter \code{local_score} \cr
+    \tab \cr
+    \code{K*} \tab Parameter \eqn{K^*} defined in Karlin and Dembo (1990) \cr
+    \tab \cr
+    \code{lambda} \tab Parameter \eqn{\lambda} defined in Karlin and Dembo (1990) \cr
+    \code{localScores} \tab Vector of size \code{numSim} containing the simulated local scores for sequence size of \code{simulated_sequence_length}
+}
 }
 \description{
-Estimates p-value, for integer scores, based on a Monte Carlo estimation of Gumble
-parameters from simulations of smaller sequences with same distribution. 
-Appropriate for great sequences with length > 10^3, for i.i.d and markovian sequence models.
+Estimates p-value of the local score based on a Monte Carlo
+  estimation of Gumble parameters from simulations of smaller sequences with
+  same distribution. Appropriate for great sequences with length > 10^3, for
+  i.i.d and markovian sequence models.
 }
 \details{
-The length of the simulated sequences is an argument specific to the function provided for simulation. Thus, it has to be
-provided also in the parameter simulated_sequence_length in the arguments of the "Monte Carlo - Karlin" function. 
-It is a crucial detail as it influences precision and computation time of the result. Note that to get an appropriate 
-estimation, the given average score must be non-positive.
+The length of the simulated sequences is an argument specific to the
+  function provided for simulation. Thus, it has to be provided also in the
+  parameter \code{simulated_sequence_length} in the arguments of the "Monte
+  Carlo - Karlin" function. It is a crucial detail as it influences precision
+  and computation time of the result. Note that to get an appropriate
+  estimation, the given average score must be non-positive. Be careful that
+  the parameters names of the function \code{FUN} should differ from those of
+  \code{karlinMonteCarlo} function. \cr Methods - Parameters \eqn{K^\star}
+  and \eqn{\lambda} of Karlin and Dembo (1990) are estimated by a linear
+  regression on the log(-log(cumulative distribution function of the local
+  scores)) on shorter sequences (size \code{simulated_sequence_length}). The
+  formula used are : \eqn{\hat{\lambda} = -\hat{b}} and \eqn{\hat{K^\star} =
+  exp(\hat{a})/simulated\_sequence\_length} where \eqn{\hat{a}} is the
+  intercept of the regression and \eqn{\hat{b}} is the slope of the
+  regression. Then p-value is given by \eqn{p = exp(-K^\star * exp(-\lambda*x
+  ))} where \eqn{x = local\_score - \log(sequence\_length)/\lambda}. \cr The
+  density plot produced by \code{plot == TRUE} depends on the type of the
+  simulated local scores: if they are integer, a barplot of relative
+  frequency is used, else \code{plot(density(...))} is used. \cr This
+  function calls \code{\link{localScoreC}} which type of the output depends
+  on the type of the input. To be efficient, be aware to use a simulating
+  function \code{FUN} that return a vector of adequate type ("integer" or
+  "numeric"). Warning: in R, \code{typeof(c(1,3,4,10)) == "double"}. You can
+  set a type of a vector with \code{mode()} or \code{as.integer()} functions
+  for example. \cr \code{karlinMonteCarlo_double()} is deprecated. At this
+  point, it is just a call to \code{karlinMonteCarlo()} function.
 }
 \examples{
-new = sample(-7:6, replace = TRUE, size = 1000) 
-#MonteCarlo taking random sample from the input sequence itself
 \donttest{
-karlinMonteCarlo(local_score = 66, sequence_length = 1000,  
-               FUN = function(x, simulated_sequence_length) {return(sample(x = x, 
-               size = simulated_sequence_length, replace = TRUE))}, 
-               x=new, simulated_sequence_length = 1000,  numSim = 1000)
+mySeq <- sample(-7:6, replace = TRUE, size = 100000)
+#MonteCarlo taking random sample from the input sequence itself
+karlinMonteCarlo(local_score = 160, sequence_length = 100000,
+               simulated_sequence_length = 1000,
+               FUN = function(x, sim_length) {
+                        return(sample(x = x,
+                               size = sim_length,
+                               replace = TRUE))
+                     },
+               x = mySeq,
+               sim_length = 1000,
+               numSim = 1000)
 }
-               
+\donttest{
+#Markovian example (longer computation)
+MyTransMat_reels <-  matrix(c(0.3, 0.1, 0.1, 0.1, 0.4,
+                              0.2, 0.2, 0.1, 0.2, 0.3,
+                              0.3, 0.4, 0.1, 0.1, 0.1,
+                              0.3, 0.3, 0.1, 0.2, 0.1,
+                              0.2, 0.1, 0.2, 0.4, 0.1),
+                              ncol = 5, byrow=TRUE)
+karlinMonteCarlo(local_score = 18.5, sequence_length = 200000,
+                 simulated_sequence_length = 1500,
+                 FUN = transmatrix2sequence,
+                 matrix = MyTransMat_reels,
+                 score =c(-1.5,-0.5,0,0.5,1), length = 1500,
+                 plot=TRUE, numSim = 1500)
+}
+}
+\seealso{
+\code{\link{monteCarlo}} \code{\link{localScoreC}}
 }

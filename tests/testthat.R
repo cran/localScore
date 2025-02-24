@@ -1,4 +1,4 @@
 library(testthat)
-library(localScore)
+#library(localScore)
 
 test_check("localScore")

@@ -7,24 +7,21 @@
 sequences2transmatrix(sequences)
 }
 \arguments{
-\item{sequences}{Sequences to be analyzed, as list of numeric vectors}
+\item{sequences}{Sequences to be analyzed, can be a list of vectors, or a vector}
 }
 \value{
 A list object containing
-\item{Transition Matrix}{Transition Matrix}
-\item{Min Value}{minimal score found in supplied sequences}
-\item{Max Value}{maximal score found in supplied sequences}
+\item{transition_matrix}{Transition Matrix with row names and column names are the associated score/state}
+\item{score_value}{a vector containing the score/state, ordered in the same way as the matrix columns and rows}
 }
 \description{
-Calculates the transition matrix by counting occurences of tuples in given vector list
+Calculates the transition matrix by counting occurrences of tuples in given vector list
 }
 \details{
-The transition matrix will be structured so that the lowest score corresponds to the first column and row
-and the highest score corresponds to the last column and row. Note that the resulting matrix is not stochastic because it can occur rows filled up with only 0 for not observed score in Min Value Max Value interval.
+In output, score_value is coerced as integer if possible. Else, it is a character vector containing the states
+of the Markov chain.
 }
 \examples{
-seq = sample(-1:1, size = 20, replace = TRUE)
-seq2 = sample(-6:1, size = 20, replace = TRUE)
-seq3 = sample(3:6, size = 50, replace = TRUE)
-sequences2transmatrix(list(seq, seq2, seq3))
+myseq <- sample(LETTERS[1:2], size=20,replace=TRUE)
+sequences2transmatrix(myseq)
 }

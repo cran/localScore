@@ -5,7 +5,7 @@
 \title{Daudin [p-value] [iid]}
 \usage{
 daudin(
-  localScore,
+  local_score,
   sequence_length,
   score_probabilities,
   sequence_min,
@@ -13,7 +13,7 @@ daudin(
 )
 }
 \arguments{
-\item{localScore}{the observed local score}
+\item{local_score}{the observed local score}
 
 \item{sequence_length}{length of the sequence}
 
@@ -27,14 +27,17 @@ daudin(
 A double representing the probability of a local score as high as the one given as argument
 }
 \description{
-Calculates the exact p-value in the identically and independantly distributed of a given local score, a sequence length that 'must not be too large' and for a given score distribution
+Calculates the exact p-value in the identically and independently distributed of a given local score, a sequence length that 'must not be too large' and for a given score distribution
 }
 \details{
 Small in this context depends heavily on your machine. On a 3,7GHZ machine this means for daudin(1000, 5000, c(0.2, 0.2, 0.2, 0.1, 0.2, 0.1), -2, 3)
-an execution time of ~2 seconds. This is due to the calculation method using matrix exponentation which becomes very fast very slow. The size of the matrix of the exponentiation is equal to a+1 with a the local score value. The matrix must be put at the power n, with n the sequence length.
+an execution time of ~2 seconds. This is due to the calculation method using matrix exponentiation which takes times. The size of the matrix of the exponentiation is equal to a+1 with a the local score value. The matrix must be put at the power n, with n the sequence length.
 Moreover, it is known that the local score value is expected to be in mean of order log(n).
 }
 \examples{
-daudin(localScore = 4, sequence_length = 50, 
+daudin(local_score = 4, sequence_length = 50, 
 score_probabilities = c(0.2, 0.3, 0.1, 0.2, 0.1, 0.1), sequence_min = -3, sequence_max = 2)
+}
+\seealso{
+\code{\link{karlin}}, \code{\link{mcc}}, \code{\link{karlinMonteCarlo}}, \code{\link{monteCarlo}}
 }
