@@ -9,22 +9,31 @@ karlin(
   local_score,
   sequence_length,
   score_probabilities,
-  sequence_min,
-  sequence_max
+  sequence_min = NULL,
+  sequence_max = NULL,
+  score_values = NULL
 )
 
-karlin_parameters(score_probabilities, sequence_min, sequence_max)
+karlin_parameters(
+  score_probabilities,
+  sequence_min = NULL,
+  sequence_max = NULL,
+  score_values = NULL
+)
 }
 \arguments{
 \item{local_score}{the observed local score}
 
-\item{sequence_length}{length of the sequence (at least several hundreds)}
+\item{sequence_length}{length of the sequence}
 
-\item{score_probabilities}{the probabilities for each unique score from lowest to greatest}
+\item{score_probabilities}{the probabilities for each score from lowest to greatest}
 
-\item{sequence_min}{minimum score}
+\item{sequence_min}{minimum score (optional if \code{score_values} is defined)}
 
-\item{sequence_max}{maximum score}
+\item{sequence_max}{maximum score (optional if \code{score_values} is defined)}
+
+\item{score_values}{vector of integer score values, associated to score_probabilities  (optional if
+\code{sequence_min} and \code{sequence_max} are defined)}
 }
 \value{
 A double representing the probability of a local score as high as the one given as argument
@@ -46,6 +55,20 @@ Notice the lower bound can easily be found as it is the same call of function wi
 }
 \examples{
 karlin(150, 10000, c(0.08, 0.32, 0.08, 0.00, 0.08, 0.00, 0.00, 0.08, 0.02, 0.32, 0.02), -5, 5)
+p1 <- karlin(local_score = 15, sequence_length = 5000, 
+       score_probabilities = c(0.2, 0.3, 0.1, 0.2, 0.1, 0.1), 
+       sequence_min = -3, sequence_max = 2)
+p2 <- karlin(local_score = 15, sequence_length = 5000, 
+       score_probabilities = c(0.2, 0.3, 0.1, 0.2, 0.1, 0.1), 
+       score_values = -3:2)
+p1 == p2 # TRUE
+
+prob <- c(0.08, 0.32, 0.08, 0.00, 0.08, 0.00, 0.00, 0.08, 0.02, 0.32, 0.02)
+score_values <- which(prob != 0) - 6 # keep only non null probability scores
+prob0 <- prob[prob != 0]             # and associated probability
+p <- karlin(150, 10000, prob, sequence_min = -5, sequence_max =  5)
+p0 <- karlin(150, 10000, prob0, score_values = score_values) 
+p == p0 # TRUE
 }
 \seealso{
 \code{\link{mcc}}, \code{\link{daudin}}, \code{\link{karlinMonteCarlo}}, \code{\link{monteCarlo}}

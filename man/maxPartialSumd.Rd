@@ -4,16 +4,25 @@
 \alias{maxPartialSumd}
 \title{Maximum of the partial sum [probability] [iid]}
 \usage{
-maxPartialSumd(k, score_probabilities, sequence_min, sequence_max)
+maxPartialSumd(
+  k,
+  score_probabilities,
+  sequence_min = NULL,
+  sequence_max = NULL,
+  score_values = NULL
+)
 }
 \arguments{
 \item{k}{value at which calculates the probability}
 
-\item{score_probabilities}{the probabilities for each unique score from lowest to greatest}
+\item{score_probabilities}{the probabilities for each score from lowest to greatest}
 
-\item{sequence_min}{minimum score}
+\item{sequence_min}{minimum score (optional if \code{score_values} is defined)}
 
-\item{sequence_max}{maximum score}
+\item{sequence_max}{maximum score (optional if \code{score_values} is defined)}
+
+\item{score_values}{vector of integer score values, associated to score_probabilities  (optional if
+\code{sequence_min} and \code{sequence_max} are defined)}
 }
 \value{
 A double representing the probability of the maximum of the partial sum process equal to k
@@ -30,4 +39,10 @@ The found roots are checked internally to the function and an error message is t
 }
 \examples{
 maxPartialSumd(10, c(0.08, 0.32, 0.08, 0.00, 0.08, 0.00, 0.00, 0.08, 0.02, 0.32, 0.02), -6, 4)
+prob <- c(0.08, 0.32, 0.08, 0.00, 0.08, 0.00, 0.00, 0.08, 0.02, 0.32, 0.02)
+score_values <- which(prob != 0) - 7 # keep only non null probability scores
+prob0 <- prob[prob != 0]             # and associated probability
+p <- maxPartialSumd(10, prob, sequence_min = -6, sequence_max =  4)
+p0 <- maxPartialSumd(10,prob0, score_values = score_values)
+p == p0 # TRUE
 }

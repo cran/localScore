@@ -10,50 +10,139 @@
 using namespace Rcpp;
 using Eigen::MatrixXd;
 
+// Function annex to mcc, daudin, karlin, maxPartialSumD to :
+//   *) check parameters consistency
+//   *) allow to pass score values as vector (instead of just (min, max)) of the same size as score_probabilities
+bool checkKDMparameters(int local_score, int sequence_length, NumericVector &score_probabilities, 
+                        Rcpp::IntegerVector &sequence_min, Rcpp::IntegerVector &sequence_max,
+                        Rcpp::IntegerVector &score_values) { 
+  int scoremin ;
+  int scoremax ;
+  bool isnullseqmin = sequence_min.size() == 0 ;
+  bool isnullseqmax = sequence_max.size() == 0 ;
+  bool isnullscore = score_values.size() == 0 ;
+  
+  if (isnullseqmin) sequence_min.push_front(R_PosInf) ;
+  if (isnullseqmax) sequence_max.push_front(R_NegInf) ;
+  
+  if(local_score<0)
+    stop("[Invalid Input] local score must be positive.");
+  if(sequence_length<= 0 )
+    stop("[Invalid Input] sequence length must be positive.");
+  double epsilon = 1e-12; // precision to compare the sum of the probability vector to 1.0
+  if (fabs(sum(score_probabilities)-1.0)>epsilon)
+    stop("[Invalid Input] score_probabilities must sum to 1.0.");
+  
+  if ((isnullseqmin & isnullseqmax & isnullscore) |
+      (!isnullseqmin & isnullseqmax) |
+      (isnullseqmin & !isnullseqmax)
+     )
+    stop("[Invalid input] Missing either sequence_max and sequence_min OR score_values vector.") ;
+  
+  scoremin = isnullseqmin?min(score_values):sequence_min[0] ;
+  scoremax = isnullseqmax?max(score_values):sequence_max[0] ;
+
+  if (!isnullscore) {
+    if (!isnullseqmin & (sequence_min[0] != min(score_values))) 
+      stop("[Invalid input] sequence_min != min(score_values). Note : sequence_min and sequence_max are not required when score_values is given.") ;
+    if (!isnullseqmax & (sequence_max[0] != max(score_values))) 
+      stop("[Invalid input] sequence_max != max(score_values). Note : sequence_min and sequence_max are not required when score_values is given.") ;
+  }
+  // At this point, scoremin (resp. scoremax) contains the min (resp. max) of the scores in all cases
+  
+  if (scoremax<=0)
+    stop("[Invalid Input] sequence_max must be positive.");
+  if (scoremin>=0)
+    stop("[Invalid Input] sequence_min must be negative.");
+  if (!isnullscore & (score_probabilities.size()!= score_values.size()))
+    stop("[Invalid Input] score probability distribution must contain as much elements as score_values.");
+  if (!(isnullseqmin & isnullseqmin) & (score_probabilities.size() != scoremax - scoremin + 1))
+    stop("[Invalid Input] score probability distribution must contain as much elements as the range from sequence_min to sequence_max.");
+
+    // Remove element with zero probability at the beginning then at the end.
+  unsigned int i = 0;
+  while(std::fabs(score_probabilities[i])<1e-16) {
+    scoremin++;
+    score_probabilities = tail(score_probabilities,score_probabilities.length()-1);
+    if(!isnullscore)
+      score_values = tail(score_values, score_values.length()-1) ;
+  }
+  i = score_probabilities.length()-1;
+  while(std::fabs(score_probabilities[i])<1e-16) {
+    scoremax--;
+    score_probabilities = head(score_probabilities,score_probabilities.length()-1);
+    if(!isnullscore)
+      score_values = head(score_values, score_values.length()-1) ;
+    i--;
+  }
+  // Update sequence_min sequence_max
+  sequence_min[0] = scoremin ;
+  sequence_max[0] = scoremax ;
+
+  // In case of score_values given, fill score_probabilities with 0. where no score is given
+  if(!isnullscore &  (score_values.size() != scoremax - scoremin + 1)) {  // otherwise nothing to do because no "holes" in score values
+    // 1. Initialise un vecteur de 0.0 de la taille nécessaire en comblant les trous
+    NumericVector res_prob (scoremax - scoremin + 1, 0.0) ; 
+    // 2. Calcul les index des positions des scores
+    for (int i = 0 ; i<score_values.size() ; i++)
+      res_prob[score_values[i] - scoremin] = score_probabilities[i] ;
+    score_probabilities = res_prob; 
+  }
+  
+  return(true) ;
+}
+
 //' @description Calculates the exact p-value in the identically and independently distributed of a given local score, a sequence length that 'must not be too large' and for a given score distribution
-//' @details Small in this context depends heavily on your machine. On a 3,7GHZ machine this means for daudin(1000, 5000, c(0.2, 0.2, 0.2, 0.1, 0.2, 0.1), -2, 3)
-//' an execution time of ~2 seconds. This is due to the calculation method using matrix exponentiation which takes times. The size of the matrix of the exponentiation is equal to a+1 with a the local score value. The matrix must be put at the power n, with n the sequence length.
-//' Moreover, it is known that the local score value is expected to be in mean of order log(n).
 //' @title Daudin [p-value] [iid]
 //' @return A double representing the probability of a local score as high as the one given as argument
 //' @param local_score the observed local score
 //' @param sequence_length length of the sequence
 //' @param score_probabilities the probabilities for each score from lowest to greatest
-//' @param sequence_min minimum score
-//' @param sequence_max maximum score
-//' @seealso \code{\link{karlin}}, \code{\link{mcc}}, \code{\link{karlinMonteCarlo}}, \code{\link{monteCarlo}}
+//' @param sequence_min minimum score (optional if \code{score_values} is defined)
+//' @param sequence_max maximum score (optional if \code{score_values} is defined)
+//' @param score_values vector of integer score values, associated to score_probabilities  (optional if
+//' \code{sequence_min} and \code{sequence_max} are defined)
+//' @details 
+//' Either \code{sequence_min} and \code{sequence_max} are specified as input, OR all possible score values in 
+//' \code{score_values} vector ; one of this choice is required. <cr>
+//' Small in this context depends heavily on your machine. 
+//' On a 3,7GHZ machine this means for daudin(1000, 5000, c(0.2, 0.2, 0.2, 0.1, 0.2, 0.1), -2, 3)
+//' an execution time of ~2 seconds. This is due to the calculation method using matrix exponentiation
+//' which takes times. The size of the matrix of the exponentiation is equal to a+1 with a the
+//' local score value. The matrix must be put at the power n, with n the sequence length.
+//' Moreover, it is known that the local score value is expected to be in mean of order log(n).
 //' @examples 
-//' daudin(local_score = 4, sequence_length = 50, 
-//' score_probabilities = c(0.2, 0.3, 0.1, 0.2, 0.1, 0.1), sequence_min = -3, sequence_max = 2)
+//' p1 <- daudin(local_score = 4, sequence_length = 50, 
+//'        score_probabilities = c(0.2, 0.3, 0.1, 0.2, 0.1, 0.1), 
+//'        sequence_min = -3, sequence_max = 2)
+//' p2 <- daudin(local_score = 4, sequence_length = 50, 
+//'        score_probabilities = c(0.2, 0.3, 0.1, 0.2, 0.1, 0.1), 
+//'        score_values = -3:2)
+//' p1 == p2 # TRUE
+//' 
+//' prob <- c(0.08, 0.32, 0.08, 0.00, 0.08, 0.00, 0.00, 0.08, 0.02, 0.32, 0.02)
+//' score_values <- which(prob != 0) - 6 # keep only non null probability scores
+//' prob0 <- prob[prob != 0]             # and associated probability
+//' p <- daudin(150, 10000, prob, sequence_min = -5, sequence_max =  5)
+//' p0 <- daudin(150, 10000, prob0, score_values = score_values)
+//' p == p0 # TRUE
 //' @export
 // [[Rcpp::export]]
-double daudin(int local_score, int sequence_length, NumericVector score_probabilities, int sequence_min, int sequence_max){
-  if(local_score<0)
-    stop("[Invalid Input] local score must be positive.");
-  if(sequence_length<= 0 )
-    stop("[Invalid Input] sequence length must be positive.");
-  if(score_probabilities.size()!= sequence_max - sequence_min + 1)
-    stop("[Invalid Input] score probability distribution must contain as much elements as the range from sequence_min to sequence_max.");
-  if(sequence_max<=0)
-    stop("[Invalid Input] sequence_max must be positive.");
-  if(sequence_min>=0)
-    stop("[Invalid Input] sequence_min must be negative.");
-  double epsilon = 1e-12; // precision to compare the sum of the probability vector to 1.0
-  if (fabs(sum(score_probabilities)-1.0)>epsilon)
-    stop("[Invalid Input] score_probabilities must sum to 1.0.");
-  // Remove element with zero probability at the beginning then at the end.
-  unsigned int i = 0;
-  while(std::fabs(score_probabilities[i])<1e-16) {
-    sequence_min++;
-    score_probabilities = tail(score_probabilities,score_probabilities.length()-1);
-  }
-  i = score_probabilities.length()-1;
-  while(std::fabs(score_probabilities[i])<1e-16) {
-    sequence_max--;
-    score_probabilities = head(score_probabilities,score_probabilities.length()-1);
-    i--;
-  }
-  return calcul_daudin(local_score, sequence_length, as<std::vector<double>>(score_probabilities), sequence_min, sequence_max);
+double daudin(int local_score, int sequence_length, NumericVector score_probabilities,
+              Rcpp::Nullable<Rcpp::IntegerVector> sequence_min = R_NilValue, 
+              Rcpp::Nullable<Rcpp::IntegerVector> sequence_max = R_NilValue,
+              Rcpp::Nullable<Rcpp::IntegerVector> score_values = R_NilValue) {
+  Rcpp::IntegerVector score_values_ ; //non nullable equivalent
+  Rcpp::IntegerVector sequence_min_ ; //non nullable equivalent
+  Rcpp::IntegerVector sequence_max_ ; //non nullable equivalent
+  sequence_min_ = sequence_min.isUsable()?sequence_min:IntegerVector::create();
+  sequence_max_ = sequence_max.isUsable()?sequence_max:IntegerVector::create();
+  score_values_ = score_values.isUsable()?score_values:IntegerVector::create();
+  
+  bool checkOK = checkKDMparameters(local_score, sequence_length, score_probabilities, sequence_min_, sequence_max_, score_values_) ;
+
+  return calcul_daudin(local_score, sequence_length, as<std::vector<double>>(score_probabilities),
+                       as<int>(sequence_min_), as<int>(sequence_max_));
 }
 
 //' @description \code{karlin} Calculates an approximated p-value of a given local score value and a long sequence length in the identically and independently distributed model for the sequence. See also \code{\link{mcc}} function for another approximated method in the i.i.d. model that improved the one given by \code{\link{karlin}} or \code{\link{daudin}} for exact calculation. \cr
@@ -69,50 +158,49 @@ double daudin(int local_score, int sequence_length, NumericVector score_probabil
 //' Notice the lower bound can easily be found as it is the same call of function with parameter value local_score+1.
 //' @title Karlin [p-value] [iid]
 //' @return A double representing the probability of a local score as high as the one given as argument
-//' @param local_score the observed local score
-//' @param sequence_length length of the sequence (at least several hundreds)
-//' @param score_probabilities the probabilities for each unique score from lowest to greatest
-//' @param sequence_min minimum score
-//' @param sequence_max maximum score
+//' @inheritParams daudin
 //' @seealso \code{\link{mcc}}, \code{\link{daudin}}, \code{\link{karlinMonteCarlo}}, \code{\link{monteCarlo}}
 //' @examples 
 //' karlin(150, 10000, c(0.08, 0.32, 0.08, 0.00, 0.08, 0.00, 0.00, 0.08, 0.02, 0.32, 0.02), -5, 5)
+//' p1 <- karlin(local_score = 15, sequence_length = 5000, 
+//'        score_probabilities = c(0.2, 0.3, 0.1, 0.2, 0.1, 0.1), 
+//'        sequence_min = -3, sequence_max = 2)
+//' p2 <- karlin(local_score = 15, sequence_length = 5000, 
+//'        score_probabilities = c(0.2, 0.3, 0.1, 0.2, 0.1, 0.1), 
+//'        score_values = -3:2)
+//' p1 == p2 # TRUE
+//' 
+//' prob <- c(0.08, 0.32, 0.08, 0.00, 0.08, 0.00, 0.00, 0.08, 0.02, 0.32, 0.02)
+//' score_values <- which(prob != 0) - 6 # keep only non null probability scores
+//' prob0 <- prob[prob != 0]             # and associated probability
+//' p <- karlin(150, 10000, prob, sequence_min = -5, sequence_max =  5)
+//' p0 <- karlin(150, 10000, prob0, score_values = score_values) 
+//' p == p0 # TRUE
 //' @export
 // [[Rcpp::export]]
-double karlin(int local_score, int sequence_length, NumericVector score_probabilities, int sequence_min, int sequence_max){
-  if(local_score<0)
-    stop("[Invalid Input] local score must be positive.");
-  if(sequence_length<= 0 )
-    stop("[Invalid Input] sequence length must be positive.");
-  if(score_probabilities.size()!= sequence_max - sequence_min + 1)
-    stop("[Invalid Input] score probability distribution must contain as much elements as the range from sequence_min to sequence_max.");
-  if(sequence_max<=0)
-    stop("[Invalid Input] sequence_max must be positive.");
-  if(sequence_min>=0)
-    stop("[Invalid Input] sequence_min must be negative.");
-  double epsilon = 1e-12; // precision to compare the sum of the probability vector to 1.0
-  if (fabs(sum(score_probabilities)-1.0)>epsilon)
-    stop("[Invalid Input] score_probabilities must sum to 1.0.");
+double karlin(int local_score, int sequence_length, NumericVector score_probabilities,
+              Rcpp::Nullable<Rcpp::IntegerVector> sequence_min = R_NilValue, 
+              Rcpp::Nullable<Rcpp::IntegerVector> sequence_max = R_NilValue,
+              Rcpp::Nullable<Rcpp::IntegerVector> score_values = R_NilValue) {
+  Rcpp::IntegerVector score_values_ ; //non nullable equivalent
+  Rcpp::IntegerVector sequence_min_ ; //non nullable equivalent
+  Rcpp::IntegerVector sequence_max_ ; //non nullable equivalent
+  sequence_min_ = sequence_min.isUsable()?sequence_min:IntegerVector::create();
+  sequence_max_ = sequence_max.isUsable()?sequence_max:IntegerVector::create();
+  score_values_ = score_values.isUsable()?score_values:IntegerVector::create();
+      
+  bool checkOK = checkKDMparameters(local_score, sequence_length, score_probabilities, sequence_min_, sequence_max_, score_values_) ;
+
   double esp = 0.0 ;
-  for (int i=sequence_min ; i<=sequence_max ; i++) {
-    esp += i*score_probabilities[i-sequence_min] ;
+  int min_score = as<int>(sequence_min_) ;
+  int max_score = as<int>(sequence_max_) ;
+  for (int i=min_score ; i<=max_score ; i++) {
+    esp += i*score_probabilities[i-min_score] ;
   }
   if(esp>=0.0)
     stop("[Invalid Input] Score expectation must be strictly negative.");
-  // Remove element with zero probability at the beginning then at the end.
-  unsigned int i = 0;
-  while(std::fabs(score_probabilities[i])<1e-16) {
-    sequence_min++;
-    score_probabilities = tail(score_probabilities,score_probabilities.length()-1);
-  }
-  i = score_probabilities.length()-1;
-  while(std::fabs(score_probabilities[i])<1e-16) {
-    sequence_max--;
-    score_probabilities = head(score_probabilities,score_probabilities.length()-1);
-    i--;
-  }
-  
-  double p = calcul_karlin(local_score, as<std::vector<double>>(score_probabilities), sequence_max, -sequence_min, (long)sequence_length);
+
+    double p = calcul_karlin(local_score, as<std::vector<double>>(score_probabilities), as<int>(sequence_max_), -as<int>(sequence_min_), (long)sequence_length);
   if (fabs(p+1.0)<1e-10) //p==-1.0 in case of error in calcul_karlin (polynomial roots problem)
     stop("karlin() function cannot be used in your case due to numerical instability (polynomial roots solver). Check the documentation of 'karlin()' for details.\n You could try to change your scoring discretisation step or use karlinMonteCarlo()");
   if (fabs(p+2.0)<1e-10) //p==-2.0 in case of error in calcul_karlin 
@@ -124,37 +212,32 @@ double karlin(int local_score, int sequence_length, NumericVector score_probabil
 //' @rdname karlin
 //' @export
 // [[Rcpp::export]]
-NumericVector karlin_parameters(NumericVector score_probabilities, int sequence_min, int sequence_max) {
-  if(score_probabilities.size()!= sequence_max - sequence_min + 1)
-    stop("[Invalid Input] score probability distribution must contain as much elements as the range from sequence_min to sequence_max.");
-  if(sequence_max<=0)
-    stop("[Invalid Input] sequence_max must be positive.");
-  if(sequence_min>=0)
-    stop("[Invalid Input] sequence_min must be negative.");
-  double epsilon = 1e-12; // precision to compare the sum of the probability vector to 1.0
-  if (fabs(sum(score_probabilities)-1.0)>epsilon)
-    stop("[Invalid Input] score_probabilities must sum to 1.0.");
+NumericVector karlin_parameters(NumericVector score_probabilities, 
+                                Rcpp::Nullable<Rcpp::IntegerVector> sequence_min = R_NilValue, 
+                                Rcpp::Nullable<Rcpp::IntegerVector> sequence_max = R_NilValue,
+                                Rcpp::Nullable<Rcpp::IntegerVector> score_values = R_NilValue) {
+  Rcpp::IntegerVector score_values_ ; //non nullable equivalent
+  Rcpp::IntegerVector sequence_min_ ; //non nullable equivalent
+  Rcpp::IntegerVector sequence_max_ ; //non nullable equivalent
+  sequence_min_ = sequence_min.isUsable()?sequence_min:IntegerVector::create();
+  sequence_max_ = sequence_max.isUsable()?sequence_max:IntegerVector::create();
+  score_values_ = score_values.isUsable()?score_values:IntegerVector::create();
+  
+  bool checkOK = checkKDMparameters(1, 1, score_probabilities, sequence_min_, sequence_max_, score_values_) ;
+
   double esp = 0.0 ;
-  for (int i=sequence_min ; i<=sequence_max ; i++) {
-    esp += i*score_probabilities[i-sequence_min] ;
+  int min_score = as<int>(sequence_min_) ;
+  int max_score = as<int>(sequence_max_) ;
+  for (int i=min_score ; i<=max_score ; i++) {
+    esp += i*score_probabilities[i-min_score] ;
   }
   if(esp>=0.0)
     stop("[Invalid Input] Score expectation must be strictly negative.");
-  // Remove element with zero probability at the beginning then at the end.
-  unsigned int i = 0;
-  while(std::fabs(score_probabilities[i])<1e-16) {
-    sequence_min++;
-    score_probabilities = tail(score_probabilities,score_probabilities.length()-1);
-  }
-  i = score_probabilities.length()-1;
-  while(std::fabs(score_probabilities[i])<1e-16) {
-    sequence_max--;
-    score_probabilities = head(score_probabilities,score_probabilities.length()-1);
-    i--;
-  }
+  
     
-  NumericVector res = Rcpp::wrap(calcul_karlin_parameters(as<std::vector<double>>(score_probabilities), sequence_max, -sequence_min)) ;
+  NumericVector res = Rcpp::wrap(calcul_karlin_parameters(as<std::vector<double>>(score_probabilities), max_score, -min_score)) ;
   res.names() = CharacterVector({"K_star", "K_plus", "lambda"}) ;
+  double epsilon = 1e-10 ;
   if (std::fabs(res[0] + 1.0)<epsilon) // ERROR in polynomial roots finding
     stop("karlin_parameters() function cannot be used in your case due to numerical instability (polynomial roots solver). Check the documentation of 'karlin()' for details.\n You could try to change your scoring discretisation step or use karlinMonteCarlo()");
 
@@ -170,50 +253,51 @@ NumericVector karlin_parameters(NumericVector score_probabilities, int sequence_
 //' or use the function \code{\link{karlinMonteCarlo}} .
 //' @title MCC [p-value] [iid]
 //' @return A double representing the probability of a local score as high as the one given as argument
-//' @param local_score the observed local score
-//' @param sequence_length length of the sequence (up to one hundred)
-//' @param score_probabilities the probabilities for each unique score from lowest to greatest
-//' @param sequence_min minimum score
-//' @param sequence_max maximum score
+//' @inheritParams daudin
 //' @seealso \code{\link{karlin}}, \code{\link{daudin}}, \code{\link{karlinMonteCarlo}}, \code{\link{monteCarlo}}
 //' @examples 
 //' mcc(40, 100, c(0.08, 0.32, 0.08, 0.00, 0.08, 0.00, 0.00, 0.08, 0.02, 0.32, 0.02), -6, 4)
 //' mcc(40, 10000, c(0.08, 0.32, 0.08, 0.00, 0.08, 0.00, 0.00, 0.08, 0.02, 0.32, 0.02), -6, 4)
+//' mcc(150, 10000, c(0.08, 0.32, 0.08, 0.00, 0.08, 0.00, 0.00, 0.08, 0.02, 0.32, 0.02), -5, 5)
+//' p1 <- mcc(local_score = 15, sequence_length = 5000, 
+//'        score_probabilities = c(0.2, 0.3, 0.1, 0.2, 0.1, 0.1), 
+//'        sequence_min = -3, sequence_max = 2)
+//' p2 <- mcc(local_score = 15, sequence_length = 5000, 
+//'        score_probabilities = c(0.2, 0.3, 0.1, 0.2, 0.1, 0.1), 
+//'        score_values = -3:2)
+//' p1 == p2 # TRUE
+//' 
+//' prob <- c(0.08, 0.32, 0.08, 0.00, 0.08, 0.00, 0.00, 0.08, 0.02, 0.32, 0.02)
+//' score_values <- which(prob != 0) - 6 # keep only non null probability scores
+//' prob0 <- prob[prob != 0]             # and associated probability
+//' p <- mcc(150, 10000, prob, sequence_min = -5, sequence_max =  5)
+//' p0 <- mcc(150, 10000, prob0, score_values = score_values)
+//' p == p0 # TRUE
 //' @export
 // [[Rcpp::export]]
-double mcc(int local_score, int sequence_length, NumericVector score_probabilities, int sequence_min, int sequence_max){
-  if(local_score<0)
-    stop("[Invalid Input] local score must be strictly positive.");
-  if(sequence_length<= 0 )
-    stop("[Invalid Input] sequence length must be strictly positive.");
-  if(score_probabilities.size()!= sequence_max - sequence_min + 1)
-    stop("[Invalid Input] score probability distribution must contain as much elements as the range from sequence_min to sequence_max.");
-  if(sequence_max<=0)
-    stop("[Invalid Input] sequence_max must be strictly positive.");
-  if(sequence_min>=0)
-    stop("[Invalid Input] sequence_min must be strictly negative.");
-  double epsilon = 1e-12; // precision to compare the sum of the probability vector to 1.0
-  if (fabs(sum(score_probabilities)-1.0)>epsilon)
-    stop("[Invalid Input] score_probabilities must sum to 1.0.");
+double mcc(int local_score, int sequence_length, NumericVector score_probabilities, 
+           Rcpp::Nullable<Rcpp::IntegerVector> sequence_min = R_NilValue, 
+           Rcpp::Nullable<Rcpp::IntegerVector> sequence_max = R_NilValue,
+           Rcpp::Nullable<Rcpp::IntegerVector> score_values = R_NilValue) {
+  Rcpp::IntegerVector score_values_ ; //non nullable equivalent
+  Rcpp::IntegerVector sequence_min_ ; //non nullable equivalent
+  Rcpp::IntegerVector sequence_max_ ; //non nullable equivalent
+  sequence_min_ = sequence_min.isUsable()?sequence_min:IntegerVector::create();
+  sequence_max_ = sequence_max.isUsable()?sequence_max:IntegerVector::create();
+  score_values_ = score_values.isUsable()?score_values:IntegerVector::create();
+  
+  bool checkOK = checkKDMparameters(local_score, sequence_length, score_probabilities, sequence_min_, sequence_max_, score_values_) ;
+
   double esp = 0.0 ;
-  for (int i=sequence_min ; i<=sequence_max ; i++) {
-    esp += i*score_probabilities[i-sequence_min] ;
+  int min_score = as<int>(sequence_min_) ;
+  int max_score = as<int>(sequence_max_) ;
+  for (int i=min_score ; i<=max_score ; i++) {
+    esp += i*score_probabilities[i-min_score] ;
   }
   if(esp>=0.0)
     stop("[Invalid Input] Score expectation must be strictly negative.");
-  // Remove element with zero probability at the beginning then at the end.
-  unsigned int i = 0;
-  while(std::fabs(score_probabilities[i])<1e-16) {
-    sequence_min++;
-    score_probabilities = tail(score_probabilities,score_probabilities.length()-1);
-  }
-  i = score_probabilities.length()-1;
-  while(std::fabs(score_probabilities[i])<1e-16) {
-    sequence_max--;
-    score_probabilities = head(score_probabilities,score_probabilities.length()-1);
-    i--;
-  }
-  double p = calcul_mcc(local_score, as<std::vector<double>>(score_probabilities), sequence_max, -sequence_min, (long)sequence_length);
+  
+  double p = calcul_mcc(local_score, as<std::vector<double>>(score_probabilities), max_score, -min_score, (long)sequence_length);
   if (fabs(p+1.0)<1e-10) //p==-1.0 in case of error in calcul_mcc
     stop("mcc() function cannot be used in your case. Check the documentation of 'mcc()' for details.\n You could try to change your scoring discretisation step or use karlinMonteCarlo()");
   return p;
@@ -228,32 +312,42 @@ double mcc(int local_score, int sequence_length, NumericVector score_probabiliti
 //' @title Maximum of the partial sum [probability] [iid]
 //' @return A double representing the probability of the maximum of the partial sum process equal to k
 //' @param k value at which calculates the probability
-//' @param score_probabilities the probabilities for each unique score from lowest to greatest
-//' @param sequence_min minimum score
-//' @param sequence_max maximum score
+//' @inheritParams daudin
 //' @examples 
 //' maxPartialSumd(10, c(0.08, 0.32, 0.08, 0.00, 0.08, 0.00, 0.00, 0.08, 0.02, 0.32, 0.02), -6, 4)
+//' prob <- c(0.08, 0.32, 0.08, 0.00, 0.08, 0.00, 0.00, 0.08, 0.02, 0.32, 0.02)
+//' score_values <- which(prob != 0) - 7 # keep only non null probability scores
+//' prob0 <- prob[prob != 0]             # and associated probability
+//' p <- maxPartialSumd(10, prob, sequence_min = -6, sequence_max =  4)
+//' p0 <- maxPartialSumd(10,prob0, score_values = score_values)
+//' p == p0 # TRUE
 //' @export
 // [[Rcpp::export]]
-double maxPartialSumd(int k, NumericVector score_probabilities, int sequence_min, int sequence_max){
-     if(k<0)
+double maxPartialSumd(int k, NumericVector score_probabilities,
+                      Rcpp::Nullable<Rcpp::IntegerVector> sequence_min = R_NilValue, 
+                      Rcpp::Nullable<Rcpp::IntegerVector> sequence_max = R_NilValue,
+                      Rcpp::Nullable<Rcpp::IntegerVector> score_values = R_NilValue) {
+  Rcpp::IntegerVector score_values_ ; //non nullable equivalent
+  Rcpp::IntegerVector sequence_min_ ; //non nullable equivalent
+  Rcpp::IntegerVector sequence_max_ ; //non nullable equivalent
+  sequence_min_ = sequence_min.isUsable()?sequence_min:IntegerVector::create();
+  sequence_max_ = sequence_max.isUsable()?sequence_max:IntegerVector::create();
+  score_values_ = score_values.isUsable()?score_values:IntegerVector::create();
+  
+  bool checkOK = checkKDMparameters(1, 1, score_probabilities, sequence_min_, sequence_max_, score_values_) ;
+
+  double esp = 0.0 ;
+  int min_score = as<int>(sequence_min_) ;
+  int max_score = as<int>(sequence_max_) ;
+  for (int i=min_score ; i<=max_score ; i++) {
+    esp += i*score_probabilities[i-min_score] ;
+  }
+  if(esp>=0.0)
+    stop("[Invalid Input] Score expectation must be strictly negative.");
+  if(k<0)
      stop("[Invalid Input] local score must be strictly positive.");
-   if(score_probabilities.size()!= sequence_max - sequence_min + 1)
-     stop("[Invalid Input] score probability distribution must contain as much elements as the range from sequence_min to sequence_max.");
-   if(sequence_max<=0)
-     stop("[Invalid Input] sequence_max must be strictly positive.");
-   if(sequence_min>=0)
-     stop("[Invalid Input] sequence_min must be strictly negative.");
-   double epsilon = 1e-12; // precision to compare the sum of the probability vector to 1.0
-   if (fabs(sum(score_probabilities)-1.0)>epsilon)
-     stop("[Invalid Input] score_probabilities must sum to 1.0.");
-   double esp = 0.0 ;
-   for (int i=sequence_min ; i<=sequence_max ; i++) {
-     esp += i*score_probabilities[i-sequence_min] ;
-   }
-   if(esp>=0.0)
-     stop("[Invalid Input] Score expectation must be strictly negative.");
-   double p = calcul_probMaxPartialSum(k, as<std::vector<double>>(score_probabilities), sequence_max, -sequence_min);
+
+     double p = calcul_probMaxPartialSum(k, as<std::vector<double>>(score_probabilities), max_score, -min_score);
    if (fabs(p+1.0)<1e-10) //p==-1.0 in case of error in calcul_probMaxPartialSum
      stop("probMaxPartialSum() function cannot be used in your case. Check the documentation of 'probMaxPartialSum()' for details.\n You could try to change your scoring discretisation step or use karlinMonteCarlo()");
    return p;
@@ -347,10 +441,12 @@ NumericVector stationary_distribution(NumericMatrix m){
 //'         score_values = scoreValues, prob0 = initialProb)
 //' @export
 // [[Rcpp::export]]
-double exact_mc(int local_score, NumericMatrix m, int sequence_length, Nullable<NumericVector> score_values = R_NilValue, Nullable<NumericVector> prob0 = R_NilValue){
+double exact_mc(int local_score, NumericMatrix m, int sequence_length,
+                Nullable<NumericVector> score_values = R_NilValue, 
+                Nullable<NumericVector> prob0 = R_NilValue){
 //  double exact_mc(int local_score, NumericMatrix m, int sequence_length, NumericVector score_values = Rcpp::NumericVector::create(), NumericVector prob0 = Rcpp::NumericVector::create()){
     
-   double eps = 1e-12 ;
+  double eps = 1e-12 ;
   NumericVector score_values_ ;
   NumericVector prob0_ ;
   if(score_values.isUsable()) {

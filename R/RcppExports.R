@@ -2,23 +2,42 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 #' @description Calculates the exact p-value in the identically and independently distributed of a given local score, a sequence length that 'must not be too large' and for a given score distribution
-#' @details Small in this context depends heavily on your machine. On a 3,7GHZ machine this means for daudin(1000, 5000, c(0.2, 0.2, 0.2, 0.1, 0.2, 0.1), -2, 3)
-#' an execution time of ~2 seconds. This is due to the calculation method using matrix exponentiation which takes times. The size of the matrix of the exponentiation is equal to a+1 with a the local score value. The matrix must be put at the power n, with n the sequence length.
-#' Moreover, it is known that the local score value is expected to be in mean of order log(n).
 #' @title Daudin [p-value] [iid]
 #' @return A double representing the probability of a local score as high as the one given as argument
 #' @param local_score the observed local score
 #' @param sequence_length length of the sequence
 #' @param score_probabilities the probabilities for each score from lowest to greatest
-#' @param sequence_min minimum score
-#' @param sequence_max maximum score
-#' @seealso \code{\link{karlin}}, \code{\link{mcc}}, \code{\link{karlinMonteCarlo}}, \code{\link{monteCarlo}}
+#' @param sequence_min minimum score (optional if \code{score_values} is defined)
+#' @param sequence_max maximum score (optional if \code{score_values} is defined)
+#' @param score_values vector of integer score values, associated to score_probabilities  (optional if
+#' \code{sequence_min} and \code{sequence_max} are defined)
+#' @details 
+#' Either \code{sequence_min} and \code{sequence_max} are specified as input, OR all possible score values in 
+#' \code{score_values} vector ; one of this choice is required. <cr>
+#' Small in this context depends heavily on your machine. 
+#' On a 3,7GHZ machine this means for daudin(1000, 5000, c(0.2, 0.2, 0.2, 0.1, 0.2, 0.1), -2, 3)
+#' an execution time of ~2 seconds. This is due to the calculation method using matrix exponentiation
+#' which takes times. The size of the matrix of the exponentiation is equal to a+1 with a the
+#' local score value. The matrix must be put at the power n, with n the sequence length.
+#' Moreover, it is known that the local score value is expected to be in mean of order log(n).
 #' @examples 
-#' daudin(local_score = 4, sequence_length = 50, 
-#' score_probabilities = c(0.2, 0.3, 0.1, 0.2, 0.1, 0.1), sequence_min = -3, sequence_max = 2)
+#' p1 <- daudin(local_score = 4, sequence_length = 50, 
+#'        score_probabilities = c(0.2, 0.3, 0.1, 0.2, 0.1, 0.1), 
+#'        sequence_min = -3, sequence_max = 2)
+#' p2 <- daudin(local_score = 4, sequence_length = 50, 
+#'        score_probabilities = c(0.2, 0.3, 0.1, 0.2, 0.1, 0.1), 
+#'        score_values = -3:2)
+#' p1 == p2 # TRUE
+#' 
+#' prob <- c(0.08, 0.32, 0.08, 0.00, 0.08, 0.00, 0.00, 0.08, 0.02, 0.32, 0.02)
+#' score_values <- which(prob != 0) - 6 # keep only non null probability scores
+#' prob0 <- prob[prob != 0]             # and associated probability
+#' p <- daudin(150, 10000, prob, sequence_min = -5, sequence_max =  5)
+#' p0 <- daudin(150, 10000, prob0, score_values = score_values)
+#' p == p0 # TRUE
 #' @export
-daudin <- function(local_score, sequence_length, score_probabilities, sequence_min, sequence_max) {
-    .Call('_localScore_daudin', PACKAGE = 'localScore', local_score, sequence_length, score_probabilities, sequence_min, sequence_max)
+daudin <- function(local_score, sequence_length, score_probabilities, sequence_min = NULL, sequence_max = NULL, score_values = NULL) {
+    .Call('_localScore_daudin', PACKAGE = 'localScore', local_score, sequence_length, score_probabilities, sequence_min, sequence_max, score_values)
 }
 
 #' @description \code{karlin} Calculates an approximated p-value of a given local score value and a long sequence length in the identically and independently distributed model for the sequence. See also \code{\link{mcc}} function for another approximated method in the i.i.d. model that improved the one given by \code{\link{karlin}} or \code{\link{daudin}} for exact calculation. \cr
@@ -34,23 +53,33 @@ daudin <- function(local_score, sequence_length, score_probabilities, sequence_m
 #' Notice the lower bound can easily be found as it is the same call of function with parameter value local_score+1.
 #' @title Karlin [p-value] [iid]
 #' @return A double representing the probability of a local score as high as the one given as argument
-#' @param local_score the observed local score
-#' @param sequence_length length of the sequence (at least several hundreds)
-#' @param score_probabilities the probabilities for each unique score from lowest to greatest
-#' @param sequence_min minimum score
-#' @param sequence_max maximum score
+#' @inheritParams daudin
 #' @seealso \code{\link{mcc}}, \code{\link{daudin}}, \code{\link{karlinMonteCarlo}}, \code{\link{monteCarlo}}
 #' @examples 
 #' karlin(150, 10000, c(0.08, 0.32, 0.08, 0.00, 0.08, 0.00, 0.00, 0.08, 0.02, 0.32, 0.02), -5, 5)
+#' p1 <- karlin(local_score = 15, sequence_length = 5000, 
+#'        score_probabilities = c(0.2, 0.3, 0.1, 0.2, 0.1, 0.1), 
+#'        sequence_min = -3, sequence_max = 2)
+#' p2 <- karlin(local_score = 15, sequence_length = 5000, 
+#'        score_probabilities = c(0.2, 0.3, 0.1, 0.2, 0.1, 0.1), 
+#'        score_values = -3:2)
+#' p1 == p2 # TRUE
+#' 
+#' prob <- c(0.08, 0.32, 0.08, 0.00, 0.08, 0.00, 0.00, 0.08, 0.02, 0.32, 0.02)
+#' score_values <- which(prob != 0) - 6 # keep only non null probability scores
+#' prob0 <- prob[prob != 0]             # and associated probability
+#' p <- karlin(150, 10000, prob, sequence_min = -5, sequence_max =  5)
+#' p0 <- karlin(150, 10000, prob0, score_values = score_values) 
+#' p == p0 # TRUE
 #' @export
-karlin <- function(local_score, sequence_length, score_probabilities, sequence_min, sequence_max) {
-    .Call('_localScore_karlin', PACKAGE = 'localScore', local_score, sequence_length, score_probabilities, sequence_min, sequence_max)
+karlin <- function(local_score, sequence_length, score_probabilities, sequence_min = NULL, sequence_max = NULL, score_values = NULL) {
+    .Call('_localScore_karlin', PACKAGE = 'localScore', local_score, sequence_length, score_probabilities, sequence_min, sequence_max, score_values)
 }
 
 #' @rdname karlin
 #' @export
-karlin_parameters <- function(score_probabilities, sequence_min, sequence_max) {
-    .Call('_localScore_karlin_parameters', PACKAGE = 'localScore', score_probabilities, sequence_min, sequence_max)
+karlin_parameters <- function(score_probabilities, sequence_min = NULL, sequence_max = NULL, score_values = NULL) {
+    .Call('_localScore_karlin_parameters', PACKAGE = 'localScore', score_probabilities, sequence_min, sequence_max, score_values)
 }
 
 #' @description Calculates an approximated p-value for a given local score value and a medium to long sequence length in the identically and independently distributed model
@@ -62,18 +91,29 @@ karlin_parameters <- function(score_probabilities, sequence_min, sequence_max) {
 #' or use the function \code{\link{karlinMonteCarlo}} .
 #' @title MCC [p-value] [iid]
 #' @return A double representing the probability of a local score as high as the one given as argument
-#' @param local_score the observed local score
-#' @param sequence_length length of the sequence (up to one hundred)
-#' @param score_probabilities the probabilities for each unique score from lowest to greatest
-#' @param sequence_min minimum score
-#' @param sequence_max maximum score
+#' @inheritParams daudin
 #' @seealso \code{\link{karlin}}, \code{\link{daudin}}, \code{\link{karlinMonteCarlo}}, \code{\link{monteCarlo}}
 #' @examples 
 #' mcc(40, 100, c(0.08, 0.32, 0.08, 0.00, 0.08, 0.00, 0.00, 0.08, 0.02, 0.32, 0.02), -6, 4)
 #' mcc(40, 10000, c(0.08, 0.32, 0.08, 0.00, 0.08, 0.00, 0.00, 0.08, 0.02, 0.32, 0.02), -6, 4)
+#' mcc(150, 10000, c(0.08, 0.32, 0.08, 0.00, 0.08, 0.00, 0.00, 0.08, 0.02, 0.32, 0.02), -5, 5)
+#' p1 <- mcc(local_score = 15, sequence_length = 5000, 
+#'        score_probabilities = c(0.2, 0.3, 0.1, 0.2, 0.1, 0.1), 
+#'        sequence_min = -3, sequence_max = 2)
+#' p2 <- mcc(local_score = 15, sequence_length = 5000, 
+#'        score_probabilities = c(0.2, 0.3, 0.1, 0.2, 0.1, 0.1), 
+#'        score_values = -3:2)
+#' p1 == p2 # TRUE
+#' 
+#' prob <- c(0.08, 0.32, 0.08, 0.00, 0.08, 0.00, 0.00, 0.08, 0.02, 0.32, 0.02)
+#' score_values <- which(prob != 0) - 6 # keep only non null probability scores
+#' prob0 <- prob[prob != 0]             # and associated probability
+#' p <- mcc(150, 10000, prob, sequence_min = -5, sequence_max =  5)
+#' p0 <- mcc(150, 10000, prob0, score_values = score_values)
+#' p == p0 # TRUE
 #' @export
-mcc <- function(local_score, sequence_length, score_probabilities, sequence_min, sequence_max) {
-    .Call('_localScore_mcc', PACKAGE = 'localScore', local_score, sequence_length, score_probabilities, sequence_min, sequence_max)
+mcc <- function(local_score, sequence_length, score_probabilities, sequence_min = NULL, sequence_max = NULL, score_values = NULL) {
+    .Call('_localScore_mcc', PACKAGE = 'localScore', local_score, sequence_length, score_probabilities, sequence_min, sequence_max, score_values)
 }
 
 #' @description Calculates the distribution of the maximum of the partial sum process for a given value in the identically and independently distributed model
@@ -85,14 +125,18 @@ mcc <- function(local_score, sequence_length, score_probabilities, sequence_min,
 #' @title Maximum of the partial sum [probability] [iid]
 #' @return A double representing the probability of the maximum of the partial sum process equal to k
 #' @param k value at which calculates the probability
-#' @param score_probabilities the probabilities for each unique score from lowest to greatest
-#' @param sequence_min minimum score
-#' @param sequence_max maximum score
+#' @inheritParams daudin
 #' @examples 
 #' maxPartialSumd(10, c(0.08, 0.32, 0.08, 0.00, 0.08, 0.00, 0.00, 0.08, 0.02, 0.32, 0.02), -6, 4)
+#' prob <- c(0.08, 0.32, 0.08, 0.00, 0.08, 0.00, 0.00, 0.08, 0.02, 0.32, 0.02)
+#' score_values <- which(prob != 0) - 7 # keep only non null probability scores
+#' prob0 <- prob[prob != 0]             # and associated probability
+#' p <- maxPartialSumd(10, prob, sequence_min = -6, sequence_max =  4)
+#' p0 <- maxPartialSumd(10,prob0, score_values = score_values)
+#' p == p0 # TRUE
 #' @export
-maxPartialSumd <- function(k, score_probabilities, sequence_min, sequence_max) {
-    .Call('_localScore_maxPartialSumd', PACKAGE = 'localScore', k, score_probabilities, sequence_min, sequence_max)
+maxPartialSumd <- function(k, score_probabilities, sequence_min = NULL, sequence_max = NULL, score_values = NULL) {
+    .Call('_localScore_maxPartialSumd', PACKAGE = 'localScore', k, score_probabilities, sequence_min, sequence_max, score_values)
 }
 
 #' @description Calculates stationary distribution of markov transition matrix by use of eigenvectors of length 1

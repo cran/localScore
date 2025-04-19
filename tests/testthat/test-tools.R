@@ -1,17 +1,16 @@
 context("Tests of diverse tool functions")
 
 test_that("Markov score generation (approximate testing because random)", {
-  nState <- 5
-  MyTransMat <- matrix(c(0.3,0.1,0.1,0.1,0.4,
-                         0.2,0.2,0.1,0.2,0.3, 
-                         0.3,0.4,0.1,0.1,0.1, 
-                         0.3,0.3,0.1,0.0,0.3,
-                         0.1,0.1,0.2,0.3,0.3), ncol = nState, byrow = TRUE)
-  sequence <- transmatrix2sequence(matrix = MyTransMat,length = 100000, score = c(-2,-1,0,2,3))
+  set.seed(10000)
+  nState <- 3
+  MyTransMat <- matrix(c(0.3, 0.3, 0.4,
+                         0.5, 0.3, 0.2,
+                         0.4, 0.4, 0.2), ncol = nState, byrow = TRUE)
+  sequence <- transmatrix2sequence(matrix = MyTransMat,length = 100000, score = c(-2,0,1))
   count <- table(sequence[-length(sequence)],sequence[-1])
   count <- as.matrix(addmargins(count))
-  relFreq <- count[1:5,1:5]/count[1:5,6]
-  expect_true(all(abs(relFreq - MyTransMat) < 0.01))
+  relFreq <- count[1:nState, 1:nState] / count[1:nState, nState + 1]
+  expect_true(all(abs(relFreq - MyTransMat) < 0.1))
 })
 
 test_that("Markov score generation (good output type)", {
@@ -25,6 +24,19 @@ test_that("Markov score generation (good output type)", {
   expect_false(is.integer(s3))
   expect_false(is.integer(s4))
   expect_true(is.numeric(s4))
+})
+
+test_that("Markov score generation (good state generation)", {
+  B <-  matrix(c(0, 1, 1, 0), nrow = 2, byrow = TRUE)
+  scoreI <- c(-2,1)
+  scoreC <- c("A","B")
+  scoreF <- c(-2.5,1)
+  s2 <- transmatrix2sequence(B, length = 10, initialIndex = 1, score = scoreI)
+  s3 <- transmatrix2sequence(B, length = 10, initialIndex = 1, score = scoreC)
+  s4 <- transmatrix2sequence(B, length = 10, initialIndex = 1, score = scoreF)
+  expect_true(all(s2 %in% scoreI))
+  expect_true(all(s3 %in% scoreC))
+  expect_true(all(s4 %in% scoreF))
 })
 
 

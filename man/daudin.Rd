@@ -8,8 +8,9 @@ daudin(
   local_score,
   sequence_length,
   score_probabilities,
-  sequence_min,
-  sequence_max
+  sequence_min = NULL,
+  sequence_max = NULL,
+  score_values = NULL
 )
 }
 \arguments{
@@ -19,9 +20,12 @@ daudin(
 
 \item{score_probabilities}{the probabilities for each score from lowest to greatest}
 
-\item{sequence_min}{minimum score}
+\item{sequence_min}{minimum score (optional if \code{score_values} is defined)}
 
-\item{sequence_max}{maximum score}
+\item{sequence_max}{maximum score (optional if \code{score_values} is defined)}
+
+\item{score_values}{vector of integer score values, associated to score_probabilities  (optional if
+\code{sequence_min} and \code{sequence_max} are defined)}
 }
 \value{
 A double representing the probability of a local score as high as the one given as argument
@@ -30,14 +34,28 @@ A double representing the probability of a local score as high as the one given 
 Calculates the exact p-value in the identically and independently distributed of a given local score, a sequence length that 'must not be too large' and for a given score distribution
 }
 \details{
-Small in this context depends heavily on your machine. On a 3,7GHZ machine this means for daudin(1000, 5000, c(0.2, 0.2, 0.2, 0.1, 0.2, 0.1), -2, 3)
-an execution time of ~2 seconds. This is due to the calculation method using matrix exponentiation which takes times. The size of the matrix of the exponentiation is equal to a+1 with a the local score value. The matrix must be put at the power n, with n the sequence length.
+Either \code{sequence_min} and \code{sequence_max} are specified as input, OR all possible score values in 
+\code{score_values} vector ; one of this choice is required. <cr>
+Small in this context depends heavily on your machine. 
+On a 3,7GHZ machine this means for daudin(1000, 5000, c(0.2, 0.2, 0.2, 0.1, 0.2, 0.1), -2, 3)
+an execution time of ~2 seconds. This is due to the calculation method using matrix exponentiation
+which takes times. The size of the matrix of the exponentiation is equal to a+1 with a the
+local score value. The matrix must be put at the power n, with n the sequence length.
 Moreover, it is known that the local score value is expected to be in mean of order log(n).
 }
 \examples{
-daudin(local_score = 4, sequence_length = 50, 
-score_probabilities = c(0.2, 0.3, 0.1, 0.2, 0.1, 0.1), sequence_min = -3, sequence_max = 2)
-}
-\seealso{
-\code{\link{karlin}}, \code{\link{mcc}}, \code{\link{karlinMonteCarlo}}, \code{\link{monteCarlo}}
+p1 <- daudin(local_score = 4, sequence_length = 50, 
+       score_probabilities = c(0.2, 0.3, 0.1, 0.2, 0.1, 0.1), 
+       sequence_min = -3, sequence_max = 2)
+p2 <- daudin(local_score = 4, sequence_length = 50, 
+       score_probabilities = c(0.2, 0.3, 0.1, 0.2, 0.1, 0.1), 
+       score_values = -3:2)
+p1 == p2 # TRUE
+
+prob <- c(0.08, 0.32, 0.08, 0.00, 0.08, 0.00, 0.00, 0.08, 0.02, 0.32, 0.02)
+score_values <- which(prob != 0) - 6 # keep only non null probability scores
+prob0 <- prob[prob != 0]             # and associated probability
+p <- daudin(150, 10000, prob, sequence_min = -5, sequence_max =  5)
+p0 <- daudin(150, 10000, prob0, score_values = score_values)
+p == p0 # TRUE
 }

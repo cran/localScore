@@ -103,6 +103,46 @@ test_that("Entry probability does not sum to 1.0", {
   expect_error(daudin(150, 10000, prob, -2, 1), "[Invalid Input] score_probabilities must sum to 1.0.", fixed = TRUE)
 })
 
+############## Link to ticket #1 on forge MIA/INRAE #######################
+test_that("Alternative and equivalent parameters specification", {
+  prob <- c(0.08, 0.32, 0.08, 0.00, 0.08, 0.00, 0.00, 0.08, 0.02, 0.32, 0.02)
+  p <- daudin(150, 10000, prob, sequence_min = -5, sequence_max =  5)
+  p0 <- daudin(150, 10000, prob, score_values = -5:5)
+  p1 <- daudin(150, 10000, prob, score_values = -5:5, sequence_min = -5, sequence_max =  5)
+  
+  expect_equal(p, p0)
+})
+
+test_that("Alternative and equivalent parameters specification (with 'hole')", {
+  prob <- c(0.08, 0.32, 0.08, 0.00, 0.08, 0.00, 0.00, 0.08, 0.02, 0.32, 0.02)
+  prob0 <- prob[prob != 0]
+  score_values <- which(prob != 0) - 6
+  
+  p <- daudin(150, 10000, prob, sequence_min = -5, sequence_max =  5)
+  p0 <- daudin(150, 10000, prob0, score_values = score_values)
+  expect_equal(p, p0)
+})
+
+test_that("Alternative and equivalent parameters specification (with leading et trailing 0)", {
+  prob <- c(0.08, 0.32, 0.08, 0.00, 0.08, 0.00, 0.00, 0.08, 0.02, 0.32, 0.02)
+  probShort <- prob[prob != 0]
+  score_values <- which(prob != 0) - 6
+  probShort0 <- c(0, probShort)
+  score_values0 <- c(-6, score_values)
+  probShort00 <- c(probShort0, 0)
+  score_values00 <- c(score_values0 , 6)
+  
+  
+  p <- daudin(150, 10000, prob, sequence_min = -5, sequence_max =  5)
+  p1 <- daudin(150, 10000, probShort, score_values = score_values)
+  p0 <- daudin(150, 10000, probShort0, score_values = score_values0)
+  p00 <- daudin(150, 10000, probShort00, score_values = score_values00)
+  
+  expect_equal(p, p1)
+  expect_equal(p, p0)
+  expect_equal(p, p00)
+})
+
 
 ############## Link to ticket #10382 on forge DGA #######################
 test_that("Leading zero probability element does not change the results", {
