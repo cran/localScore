@@ -18,17 +18,17 @@ daudin(
 
 \item{sequence_length}{length of the sequence}
 
-\item{score_probabilities}{the probabilities for each score from lowest to greatest}
+\item{score_probabilities}{the probabilities for each score from lowest to greatest (Optionnaly with scores as names)}
 
-\item{sequence_min}{minimum score (optional if \code{score_values} is defined)}
+\item{sequence_min}{minimum score (optional if \code{score_values} OR names(score_probabilities) is defined)}
 
-\item{sequence_max}{maximum score (optional if \code{score_values} is defined)}
+\item{sequence_max}{maximum score (optional if \code{score_values} OR names(score_probabilities) is defined)}
 
 \item{score_values}{vector of integer score values, associated to score_probabilities  (optional if
-\code{sequence_min} and \code{sequence_max} are defined)}
+\code{sequence_min} and \code{sequence_max} OR names(score_probabilities) are defined)}
 }
 \value{
-A double representing the probability of a local score as high as the one given as argument
+A double representing the probability of a local score as high as the one given as argument.
 }
 \description{
 Calculates the exact p-value in the identically and independently distributed of a given local score, a sequence length that 'must not be too large' and for a given score distribution
@@ -49,7 +49,7 @@ p1 <- daudin(local_score = 4, sequence_length = 50,
        sequence_min = -3, sequence_max = 2)
 p2 <- daudin(local_score = 4, sequence_length = 50, 
        score_probabilities = c(0.2, 0.3, 0.1, 0.2, 0.1, 0.1), 
-       score_values = -3:2)
+       score_values = as.integer(-3:2))
 p1 == p2 # TRUE
 
 prob <- c(0.08, 0.32, 0.08, 0.00, 0.08, 0.00, 0.00, 0.08, 0.02, 0.32, 0.02)
@@ -57,5 +57,8 @@ score_values <- which(prob != 0) - 6 # keep only non null probability scores
 prob0 <- prob[prob != 0]             # and associated probability
 p <- daudin(150, 10000, prob, sequence_min = -5, sequence_max =  5)
 p0 <- daudin(150, 10000, prob0, score_values = score_values)
+names(prob0) <- score_values
+p1 <- daudin(150, 10000, prob0)
 p == p0 # TRUE
+p == p1 # TRUE
 }

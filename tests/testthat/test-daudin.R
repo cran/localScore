@@ -97,11 +97,55 @@ test_that("Full cases from the issue #7326 on the forge DGA", {
   }
 })
 
-## Input Error testing
-test_that("Entry probability does not sum to 1.0", {
+############## Input Error testing ################
+test_that("Entry probability sum to 1.0", {
   prob <- c(0.6,0.1,0.1,0.1) # sum to 0.9 (error)
   expect_error(daudin(150, 10000, prob, -2, 1), "[Invalid Input] score_probabilities must sum to 1.0.", fixed = TRUE)
 })
+
+test_that("Parameters are compatible", {
+  prob <- c(0.08, 0.32, 0.08, 0.00, 0.08, 0.00, 0.00, 0.08, 0.02, 0.32, 0.02)
+  score_values <- which(prob != 0) - 6 # keep only non null probability scores
+  prob0 <- prob[prob != 0]             # and associated probability
+  names(prob0) <- score_values         # gives score_values as names(score_probabilities)
+  expect_error(daudin(150, 10000, prob, sequence_min = -5, sequence_max =  5, score_values = -5:4),
+               "[Invalid input] sequence_max != max(score_values). Note : sequence_min and sequence_max are not required when score_values is given OR score_probabilities has scores as names.", fixed = TRUE)
+  expect_error(daudin(150, 10000, prob, sequence_min = -5, sequence_max =  5, score_values = -4:5),
+               "[Invalid input] sequence_min != min(score_values). Note : sequence_min and sequence_max are not required when score_values is given OR score_probabilities has scores as names.", fixed = TRUE)
+  expect_error(daudin(150, 10000, prob, sequence_min = -4, sequence_max =  5, score_values = -5:5),
+               "[Invalid input] sequence_min != min(score_values). Note : sequence_min and sequence_max are not required when score_values is given OR score_probabilities has scores as names.", fixed = TRUE)
+  expect_error(daudin(150, 10000, prob, sequence_min = -5, sequence_max =  4, score_values = -5:5),
+               "[Invalid input] sequence_max != max(score_values). Note : sequence_min and sequence_max are not required when score_values is given OR score_probabilities has scores as names.", fixed = TRUE)
+
+  expect_error(expect_warning(daudin(150, 10000, prob0, score_values = -5:5),
+                              "[Parameter specification] Both score_values and names(score_probabilities) are set. score_values is used.", fixed = TRUE),
+               "[Invalid Input] score probability distribution must contain as much elements as score_values.", fixed = TRUE)
+
+  expect_warning(daudin(15, 10000, prob0, score_values = -5:2),
+               "[Parameter specification] Both score_values and names(score_probabilities) are set. score_values is used.", fixed = TRUE)
+  expect_warning(daudin(15, 10000, prob0, sequence_min = -5, sequence_max = 2),
+               "[Parameter specification] Both sequence_min, sequence_max AND names(score_probabilities) are set. sequence_min, sequence_max are used.", fixed = TRUE)
+  
+  expect_error(expect_warning(daudin(150, 10000, prob0, sequence_min = -5, sequence_max = 5),
+                              "[Parameter specification] Both sequence_min, sequence_max AND names(score_probabilities) are set. sequence_min, sequence_max are used.", fixed = TRUE),
+                 "[Invalid Input] score probability distribution must contain as much elements as the range from sequence_min to sequence_max. Note : instead of sequence_min and sequence_max, you can also use score_values vector, OR use names(score_probabilities) as score values.", fixed = TRUE)
+  
+})
+
+
+############## Link to ticket #2 on forge MIA/INRAE #######################
+test_that("Alternative and equivalent parameters specification (only names(score_probabilities))", {
+  prob <- c(0.08, 0.32, 0.08, 0.00, 0.08, 0.00, 0.00, 0.08, 0.02, 0.32, 0.02)
+  score_values <- which(prob != 0) - 6 # keep only non null probability scores
+  prob0 <- prob[prob != 0]             # and associated probability
+  names(prob0) <- score_values         # gives score_values as names(score_probabilities)
+  p <- daudin(150, 10000, prob, sequence_min = -5, sequence_max =  5)
+  p1 <- daudin(150, 10000, prob0)
+  
+  expect_equal(p, 0.03386698)
+  expect_equal(p, p1)
+})
+
 
 ############## Link to ticket #1 on forge MIA/INRAE #######################
 test_that("Alternative and equivalent parameters specification", {
@@ -111,6 +155,7 @@ test_that("Alternative and equivalent parameters specification", {
   p1 <- daudin(150, 10000, prob, score_values = -5:5, sequence_min = -5, sequence_max =  5)
   
   expect_equal(p, p0)
+  expect_equal(p, p1)
 })
 
 test_that("Alternative and equivalent parameters specification (with 'hole')", {

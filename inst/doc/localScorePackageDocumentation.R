@@ -740,8 +740,7 @@ cbind(prob, prob.S, prob.L, "3 sequences" = scoreSequences2probabilityVector(MyS
 ## -----------------------------------------------------------------------------
 daudin.bis <- daudin(local_score = LS.S, sequence_length = n.short, score_probabilities = scoreSequences2probabilityVector(MySeqsScore), sequence_max = 5, sequence_min = -5)
 daudin.bis
-AA$P49755.fasta$`p-value`
-
+AA$Q09FU3.fasta$`p-value`
 # automatic_analysis(sequences=list('MySeq.Short'=MySeq.Short), model='iid', distribution=proba.S)
 
 

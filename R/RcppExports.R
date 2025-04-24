@@ -3,14 +3,14 @@
 
 #' @description Calculates the exact p-value in the identically and independently distributed of a given local score, a sequence length that 'must not be too large' and for a given score distribution
 #' @title Daudin [p-value] [iid]
-#' @return A double representing the probability of a local score as high as the one given as argument
+#' @return A double representing the probability of a local score as high as the one given as argument. 
 #' @param local_score the observed local score
 #' @param sequence_length length of the sequence
-#' @param score_probabilities the probabilities for each score from lowest to greatest
-#' @param sequence_min minimum score (optional if \code{score_values} is defined)
-#' @param sequence_max maximum score (optional if \code{score_values} is defined)
+#' @param score_probabilities the probabilities for each score from lowest to greatest (Optionnaly with scores as names)
+#' @param sequence_min minimum score (optional if \code{score_values} OR names(score_probabilities) is defined)
+#' @param sequence_max maximum score (optional if \code{score_values} OR names(score_probabilities) is defined)
 #' @param score_values vector of integer score values, associated to score_probabilities  (optional if
-#' \code{sequence_min} and \code{sequence_max} are defined)
+#' \code{sequence_min} and \code{sequence_max} OR names(score_probabilities) are defined)
 #' @details 
 #' Either \code{sequence_min} and \code{sequence_max} are specified as input, OR all possible score values in 
 #' \code{score_values} vector ; one of this choice is required. <cr>
@@ -26,7 +26,7 @@
 #'        sequence_min = -3, sequence_max = 2)
 #' p2 <- daudin(local_score = 4, sequence_length = 50, 
 #'        score_probabilities = c(0.2, 0.3, 0.1, 0.2, 0.1, 0.1), 
-#'        score_values = -3:2)
+#'        score_values = as.integer(-3:2))
 #' p1 == p2 # TRUE
 #' 
 #' prob <- c(0.08, 0.32, 0.08, 0.00, 0.08, 0.00, 0.00, 0.08, 0.02, 0.32, 0.02)
@@ -34,7 +34,10 @@
 #' prob0 <- prob[prob != 0]             # and associated probability
 #' p <- daudin(150, 10000, prob, sequence_min = -5, sequence_max =  5)
 #' p0 <- daudin(150, 10000, prob0, score_values = score_values)
+#' names(prob0) <- score_values
+#' p1 <- daudin(150, 10000, prob0)
 #' p == p0 # TRUE
+#' p == p1 # TRUE
 #' @export
 daudin <- function(local_score, sequence_length, score_probabilities, sequence_min = NULL, sequence_max = NULL, score_values = NULL) {
     .Call('_localScore_daudin', PACKAGE = 'localScore', local_score, sequence_length, score_probabilities, sequence_min, sequence_max, score_values)
@@ -70,7 +73,10 @@ daudin <- function(local_score, sequence_length, score_probabilities, sequence_m
 #' prob0 <- prob[prob != 0]             # and associated probability
 #' p <- karlin(150, 10000, prob, sequence_min = -5, sequence_max =  5)
 #' p0 <- karlin(150, 10000, prob0, score_values = score_values) 
+#' names(prob0) <- score_values
+#' p1 <- karlin(150, 10000, prob0)
 #' p == p0 # TRUE
+#' p == p1 # TRUE
 #' @export
 karlin <- function(local_score, sequence_length, score_probabilities, sequence_min = NULL, sequence_max = NULL, score_values = NULL) {
     .Call('_localScore_karlin', PACKAGE = 'localScore', local_score, sequence_length, score_probabilities, sequence_min, sequence_max, score_values)
@@ -110,7 +116,10 @@ karlin_parameters <- function(score_probabilities, sequence_min = NULL, sequence
 #' prob0 <- prob[prob != 0]             # and associated probability
 #' p <- mcc(150, 10000, prob, sequence_min = -5, sequence_max =  5)
 #' p0 <- mcc(150, 10000, prob0, score_values = score_values)
+#' names(prob0) <- score_values
+#' p1 <- mcc(150, 10000, prob0)
 #' p == p0 # TRUE
+#' p == p1 # TRUE
 #' @export
 mcc <- function(local_score, sequence_length, score_probabilities, sequence_min = NULL, sequence_max = NULL, score_values = NULL) {
     .Call('_localScore_mcc', PACKAGE = 'localScore', local_score, sequence_length, score_probabilities, sequence_min, sequence_max, score_values)

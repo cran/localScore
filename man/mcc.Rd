@@ -18,14 +18,14 @@ mcc(
 
 \item{sequence_length}{length of the sequence}
 
-\item{score_probabilities}{the probabilities for each score from lowest to greatest}
+\item{score_probabilities}{the probabilities for each score from lowest to greatest (Optionnaly with scores as names)}
 
-\item{sequence_min}{minimum score (optional if \code{score_values} is defined)}
+\item{sequence_min}{minimum score (optional if \code{score_values} OR names(score_probabilities) is defined)}
 
-\item{sequence_max}{maximum score (optional if \code{score_values} is defined)}
+\item{sequence_max}{maximum score (optional if \code{score_values} OR names(score_probabilities) is defined)}
 
 \item{score_values}{vector of integer score values, associated to score_probabilities  (optional if
-\code{sequence_min} and \code{sequence_max} are defined)}
+\code{sequence_min} and \code{sequence_max} OR names(score_probabilities) are defined)}
 }
 \value{
 A double representing the probability of a local score as high as the one given as argument
@@ -58,7 +58,10 @@ score_values <- which(prob != 0) - 6 # keep only non null probability scores
 prob0 <- prob[prob != 0]             # and associated probability
 p <- mcc(150, 10000, prob, sequence_min = -5, sequence_max =  5)
 p0 <- mcc(150, 10000, prob0, score_values = score_values)
+names(prob0) <- score_values
+p1 <- mcc(150, 10000, prob0)
 p == p0 # TRUE
+p == p1 # TRUE
 }
 \seealso{
 \code{\link{karlin}}, \code{\link{daudin}}, \code{\link{karlinMonteCarlo}}, \code{\link{monteCarlo}}

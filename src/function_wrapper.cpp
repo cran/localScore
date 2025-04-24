@@ -13,17 +13,20 @@ using Eigen::MatrixXd;
 // Function annex to mcc, daudin, karlin, maxPartialSumD to :
 //   *) check parameters consistency
 //   *) allow to pass score values as vector (instead of just (min, max)) of the same size as score_probabilities
+//   *) allow to pass score values as names(score_probabilities)
 bool checkKDMparameters(int local_score, int sequence_length, NumericVector &score_probabilities, 
                         Rcpp::IntegerVector &sequence_min, Rcpp::IntegerVector &sequence_max,
                         Rcpp::IntegerVector &score_values) { 
   int scoremin ;
   int scoremax ;
-  bool isnullseqmin = sequence_min.size() == 0 ;
-  bool isnullseqmax = sequence_max.size() == 0 ;
-  bool isnullscore = score_values.size() == 0 ;
+  bool isnullseqmin = (sequence_min.size() == 0) ;
+  bool isnullseqmax = (sequence_max.size() == 0) ;
+  bool isnullscore = (score_values.size() == 0) ;
+  bool isNoNameProb = (score_probabilities.attr("names")==R_NilValue) ;
+  // bool isNoNameProb = (score_probabilities.attr("names").isUsable()) ;
   
-  if (isnullseqmin) sequence_min.push_front(R_PosInf) ;
-  if (isnullseqmax) sequence_max.push_front(R_NegInf) ;
+  // if (isnullseqmin) sequence_min.push_front(R_PosInf) ;
+  // if (isnullseqmax) sequence_max.push_front(R_NegInf) ;
   
   if(local_score<0)
     stop("[Invalid Input] local score must be positive.");
@@ -32,55 +35,82 @@ bool checkKDMparameters(int local_score, int sequence_length, NumericVector &sco
   double epsilon = 1e-12; // precision to compare the sum of the probability vector to 1.0
   if (fabs(sum(score_probabilities)-1.0)>epsilon)
     stop("[Invalid Input] score_probabilities must sum to 1.0.");
+
+  if ((isnullseqmin && isnullseqmax && isnullscore && isNoNameProb) ||
+      (!isnullseqmin && isnullseqmax) ||
+      (isnullseqmin && !isnullseqmax)
+  )
+    stop("[Invalid input] Missing either sequence_max and sequence_min OR score_values vector OR integer names to score_probabilities.") ;
   
-  if ((isnullseqmin & isnullseqmax & isnullscore) |
-      (!isnullseqmin & isnullseqmax) |
-      (isnullseqmin & !isnullseqmax)
-     )
-    stop("[Invalid input] Missing either sequence_max and sequence_min OR score_values vector.") ;
-  
+  // Convert names of score_probabilities into score values if not specify otherwise
+  // if (isnullscore && isnullseqmin && !isNoNameProb) { 
+  if (isnullscore && !isNoNameProb) { 
+      CharacterVector ch = score_probabilities.names();
+      if (ch.size() != score_probabilities.size()) {
+        stop("[ERROR : Invalid Input] Either m is a matrix  with score values as rownames or specify score values via score_values parameter");
+      } else { 
+        // Initialisation of score values
+        IntegerVector out(ch.size());
+        std::transform(ch.begin(), ch.end(), out.begin(), std::atoi);
+        score_values = out;
+        // XXX TODO gestion erreur ou les rownames ne sont pas numeric (dans ce cas atoi renvoie '0')
+      }
+    }
+
   scoremin = isnullseqmin?min(score_values):sequence_min[0] ;
   scoremax = isnullseqmax?max(score_values):sequence_max[0] ;
 
   if (!isnullscore) {
-    if (!isnullseqmin & (sequence_min[0] != min(score_values))) 
-      stop("[Invalid input] sequence_min != min(score_values). Note : sequence_min and sequence_max are not required when score_values is given.") ;
-    if (!isnullseqmax & (sequence_max[0] != max(score_values))) 
-      stop("[Invalid input] sequence_max != max(score_values). Note : sequence_min and sequence_max are not required when score_values is given.") ;
+    if (!isnullseqmin && (sequence_min[0] != min(score_values))) 
+      stop("[Invalid input] sequence_min != min(score_values). Note : sequence_min and sequence_max are not required when score_values is given OR score_probabilities has scores as names.") ;
+    if (!isnullseqmax && (sequence_max[0] != max(score_values))) 
+      stop("[Invalid input] sequence_max != max(score_values). Note : sequence_min and sequence_max are not required when score_values is given OR score_probabilities has scores as names.") ;
+    if (!isNoNameProb)
+      warning("[Parameter specification] Both score_values and names(score_probabilities) are set. score_values is used.") ;
   }
+  if (!isNoNameProb)
+    if (!isnullseqmin)
+      warning("[Parameter specification] Both sequence_min, sequence_max AND names(score_probabilities) are set. sequence_min, sequence_max are used.") ;
+  
   // At this point, scoremin (resp. scoremax) contains the min (resp. max) of the scores in all cases
   
   if (scoremax<=0)
     stop("[Invalid Input] sequence_max must be positive.");
   if (scoremin>=0)
     stop("[Invalid Input] sequence_min must be negative.");
-  if (!isnullscore & (score_probabilities.size()!= score_values.size()))
+  if (!isnullscore && (score_probabilities.size()!= score_values.size()))
     stop("[Invalid Input] score probability distribution must contain as much elements as score_values.");
-  if (!(isnullseqmin & isnullseqmin) & (score_probabilities.size() != scoremax - scoremin + 1))
-    stop("[Invalid Input] score probability distribution must contain as much elements as the range from sequence_min to sequence_max.");
+  if (!(isnullseqmin && isnullseqmax) && (score_probabilities.size() != scoremax - scoremin + 1))
+    stop("[Invalid Input] score probability distribution must contain as much elements as the range from sequence_min to sequence_max. Note : instead of sequence_min and sequence_max, you can also use score_values vector, OR use names(score_probabilities) as score values.");
 
     // Remove element with zero probability at the beginning then at the end.
   unsigned int i = 0;
   while(std::fabs(score_probabilities[i])<1e-16) {
     scoremin++;
     score_probabilities = tail(score_probabilities,score_probabilities.length()-1);
-    if(!isnullscore)
+    if(!isnullscore || !isNoNameProb)
       score_values = tail(score_values, score_values.length()-1) ;
   }
   i = score_probabilities.length()-1;
   while(std::fabs(score_probabilities[i])<1e-16) {
     scoremax--;
     score_probabilities = head(score_probabilities,score_probabilities.length()-1);
-    if(!isnullscore)
+    if(!isnullscore || !isNoNameProb)
       score_values = head(score_values, score_values.length()-1) ;
     i--;
   }
   // Update sequence_min sequence_max
-  sequence_min[0] = scoremin ;
-  sequence_max[0] = scoremax ;
+  if (isnullseqmin)
+    sequence_min.push_front(scoremin) ;
+  else
+    sequence_min[0] = scoremin ;
+  if (isnullseqmax)
+    sequence_max.push_front(scoremax) ;
+  else
+    sequence_max[0] = scoremax ;
 
-  // In case of score_values given, fill score_probabilities with 0. where no score is given
-  if(!isnullscore &  (score_values.size() != scoremax - scoremin + 1)) {  // otherwise nothing to do because no "holes" in score values
+    // In case of score_values given, fill score_probabilities with 0. where no score is given
+  if((!isnullscore || !isNoNameProb) &&  (score_values.size() != scoremax - scoremin + 1)) {  // otherwise nothing to do because no "holes" in score values
     // 1. Initialise un vecteur de 0.0 de la taille nécessaire en comblant les trous
     NumericVector res_prob (scoremax - scoremin + 1, 0.0) ; 
     // 2. Calcul les index des positions des scores
@@ -88,20 +118,20 @@ bool checkKDMparameters(int local_score, int sequence_length, NumericVector &sco
       res_prob[score_values[i] - scoremin] = score_probabilities[i] ;
     score_probabilities = res_prob; 
   }
-  
+
   return(true) ;
 }
 
 //' @description Calculates the exact p-value in the identically and independently distributed of a given local score, a sequence length that 'must not be too large' and for a given score distribution
 //' @title Daudin [p-value] [iid]
-//' @return A double representing the probability of a local score as high as the one given as argument
+//' @return A double representing the probability of a local score as high as the one given as argument. 
 //' @param local_score the observed local score
 //' @param sequence_length length of the sequence
-//' @param score_probabilities the probabilities for each score from lowest to greatest
-//' @param sequence_min minimum score (optional if \code{score_values} is defined)
-//' @param sequence_max maximum score (optional if \code{score_values} is defined)
+//' @param score_probabilities the probabilities for each score from lowest to greatest (Optionnaly with scores as names)
+//' @param sequence_min minimum score (optional if \code{score_values} OR names(score_probabilities) is defined)
+//' @param sequence_max maximum score (optional if \code{score_values} OR names(score_probabilities) is defined)
 //' @param score_values vector of integer score values, associated to score_probabilities  (optional if
-//' \code{sequence_min} and \code{sequence_max} are defined)
+//' \code{sequence_min} and \code{sequence_max} OR names(score_probabilities) are defined)
 //' @details 
 //' Either \code{sequence_min} and \code{sequence_max} are specified as input, OR all possible score values in 
 //' \code{score_values} vector ; one of this choice is required. <cr>
@@ -117,7 +147,7 @@ bool checkKDMparameters(int local_score, int sequence_length, NumericVector &sco
 //'        sequence_min = -3, sequence_max = 2)
 //' p2 <- daudin(local_score = 4, sequence_length = 50, 
 //'        score_probabilities = c(0.2, 0.3, 0.1, 0.2, 0.1, 0.1), 
-//'        score_values = -3:2)
+//'        score_values = as.integer(-3:2))
 //' p1 == p2 # TRUE
 //' 
 //' prob <- c(0.08, 0.32, 0.08, 0.00, 0.08, 0.00, 0.00, 0.08, 0.02, 0.32, 0.02)
@@ -125,7 +155,10 @@ bool checkKDMparameters(int local_score, int sequence_length, NumericVector &sco
 //' prob0 <- prob[prob != 0]             # and associated probability
 //' p <- daudin(150, 10000, prob, sequence_min = -5, sequence_max =  5)
 //' p0 <- daudin(150, 10000, prob0, score_values = score_values)
+//' names(prob0) <- score_values
+//' p1 <- daudin(150, 10000, prob0)
 //' p == p0 # TRUE
+//' p == p1 # TRUE
 //' @export
 // [[Rcpp::export]]
 double daudin(int local_score, int sequence_length, NumericVector score_probabilities,
@@ -175,7 +208,10 @@ double daudin(int local_score, int sequence_length, NumericVector score_probabil
 //' prob0 <- prob[prob != 0]             # and associated probability
 //' p <- karlin(150, 10000, prob, sequence_min = -5, sequence_max =  5)
 //' p0 <- karlin(150, 10000, prob0, score_values = score_values) 
+//' names(prob0) <- score_values
+//' p1 <- karlin(150, 10000, prob0)
 //' p == p0 # TRUE
+//' p == p1 # TRUE
 //' @export
 // [[Rcpp::export]]
 double karlin(int local_score, int sequence_length, NumericVector score_probabilities,
@@ -272,7 +308,10 @@ NumericVector karlin_parameters(NumericVector score_probabilities,
 //' prob0 <- prob[prob != 0]             # and associated probability
 //' p <- mcc(150, 10000, prob, sequence_min = -5, sequence_max =  5)
 //' p0 <- mcc(150, 10000, prob0, score_values = score_values)
+//' names(prob0) <- score_values
+//' p1 <- mcc(150, 10000, prob0)
 //' p == p0 # TRUE
+//' p == p1 # TRUE
 //' @export
 // [[Rcpp::export]]
 double mcc(int local_score, int sequence_length, NumericVector score_probabilities, 

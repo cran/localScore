@@ -1,8 +1,8 @@
 Package: localScore
 Type: Package
 Title: Package for Sequence Analysis by Local Score
-Version: 2.0.2
-Date: 2025-04-18
+Version: 2.0.3
+Date: 2025-04-24
 Authors@R: c(person("Sebastian", "Simon", role = "aut"),
             person("Chris", "Verschelden", role = "aut"),
             person("Charly", "Marty", role = "aut"),
@@ -27,7 +27,7 @@ Suggests: knitr, rmarkdown, testthat (>= 2.1.0)
 VignetteBuilder: knitr
 Depends: R (>= 3.2.0)
 NeedsCompilation: yes
-Packaged: 2025-04-18 16:29:07 UTC; drobelin
+Packaged: 2025-04-24 08:37:09 UTC; drobelin
 Author: Sebastian Simon [aut],
   Chris Verschelden [aut],
   Charly Marty [aut],
@@ -37,4 +37,4 @@ Author: Sebastian Simon [aut],
   The authors of Eigen the library for the included version of Eigen
     [cph]
 Repository: CRAN
-Date/Publication: 2025-04-19 06:30:02 UTC
+Date/Publication: 2025-04-24 10:50:02 UTC

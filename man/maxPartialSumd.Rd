@@ -15,14 +15,14 @@ maxPartialSumd(
 \arguments{
 \item{k}{value at which calculates the probability}
 
-\item{score_probabilities}{the probabilities for each score from lowest to greatest}
+\item{score_probabilities}{the probabilities for each score from lowest to greatest (Optionnaly with scores as names)}
 
-\item{sequence_min}{minimum score (optional if \code{score_values} is defined)}
+\item{sequence_min}{minimum score (optional if \code{score_values} OR names(score_probabilities) is defined)}
 
-\item{sequence_max}{maximum score (optional if \code{score_values} is defined)}
+\item{sequence_max}{maximum score (optional if \code{score_values} OR names(score_probabilities) is defined)}
 
 \item{score_values}{vector of integer score values, associated to score_probabilities  (optional if
-\code{sequence_min} and \code{sequence_max} are defined)}
+\code{sequence_min} and \code{sequence_max} OR names(score_probabilities) are defined)}
 }
 \value{
 A double representing the probability of the maximum of the partial sum process equal to k
